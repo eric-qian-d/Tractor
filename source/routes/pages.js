@@ -10,7 +10,7 @@ router.get('/wait', function(request, response) {
 });
 
 router.get('/game', function(request, response) {
-	response.sendFile('game.html', {root:'source/game'});
+	response.sendFile('game.html', {root:'source/pages'});
 })
 
 module.exports = router;
