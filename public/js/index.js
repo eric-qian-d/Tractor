@@ -42,11 +42,17 @@ socket.on('game already joined', function(data){
   console.log(data);
 });
 
-socket.on('game starting', function(data){
-  console.log('game starting!');
+socket.on('game initializing', function(data){
+  console.log('game init!');
   console.log(data);
 });
 
 socket.on('hand', function(hand) {
-  console.log('hand ', hand);
+  console.log('hand ');
 });
+
+socket.on('a', function(data) {
+  console.log('all dealt!');
+  console.log(data);
+});
+

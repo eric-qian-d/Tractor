@@ -62,26 +62,34 @@ io.on('connection', function(socket) {
 	    	io.to(socket.id).emit('game joined', gameId);
 	    	console.log(game.players);
 	    	if (game.players.size == 2) {
-	    		io.to(gameId).emit('game starting', gameId);
-	    		console.log('starting game');
+	    		io.to(gameId).emit('game initializing', gameId);
+	    		// io.to(gameId).emit('a', gameId);
+	    		console.log('initializing game for ', gameId);
 	    		waitingGames.delete(gameId);
+
+	    		var hand1;
+	    		var hand2;
+	    		var hand3;
+	    		var hand4;
+	    		var bottom;
+	    		[hand1, hand2, hand3, hand4, bottom] = initHands();
 	    		var newLiveGame = {
-	    			players : game.players,
+	    			id : gameId,
+	    			players : game.players, //Map of socket.id => number joined
 	    			order : [1, 2, 3, 4, 1, 2, 3, 4],
 	    			p1 : new Map([['id', game.playerOrder[0]],
-	    				['hand', [1]], ['level', 2]]),
+	    				['hand', hand1], ['level', 2]]),
 	    			p2 : new Map([['id', game.playerOrder[1]],
-	    				['hand', [2]], ['level', 2]]),
-	    			// p3 : new Map([['id', game.playerOrder[2]],
-	    			// 	['hand', [3]], ['level', 2]]),
-	    			// p4 : new Map([['id', game.playerOrder[3]],
-	    			// 	['hand', [4]], ['level', 2]]),
+	    				['hand', hand2], ['level', 2]]),
+	    			p3 : new Map([['id', game.playerOrder[2]],
+	    				['hand', hand3], ['level', 2]]),
+	    			p4 : new Map([['id', game.playerOrder[3]],
+	    				['hand', hand4], ['level', 2]]),
 	    			trumpNum : null,
 	    			trumpSuit : null
 	    		};
 	    		liveGames[gameId] = newLiveGame;
-	    		io.to(newLiveGame.p1.get('id')).emit('hand', newLiveGame.p1.get('hand'));
-	    		io.to(newLiveGame.p2.get('id')).emit('hand', newLiveGame.p2.get('hand'));
+	    		sendCards(newLiveGame);
 	    		}
 	    	}
     	}
@@ -89,8 +97,75 @@ io.on('connection', function(socket) {
     	io.to(socket.id).emit('invalid id', gameId);
     }
   });
-  socket.on('')
  });
+
+async function sendCards(game){
+	for(var i = 0; i < 25; i++){
+		io.to(game.p1.get('id')).emit('hand', game.p1.get('hand')[i]);
+		io.to(game.p2.get('id')).emit('hand', game.p2.get('hand')[i]);
+		await sleep(1);
+	}
+	io.to(game.id).emit('a', 'bug');
+	console.log('finished dealing to ', game.id);
+}
+
+function shuffle (array) {
+// from https://gomakethings.com/how-to-shuffle-an-array-with-vanilla-js/
+	var currentIndex = array.length;
+	var temporaryValue, randomIndex;
+
+	// While there remain elements to shuffle...
+	while (0 !== currentIndex) {
+		// Pick a remaining element...
+		randomIndex = Math.floor(Math.random() * currentIndex);
+		currentIndex -= 1;
+
+		// And swap it with the current element.
+		temporaryValue = array[currentIndex];
+		array[currentIndex] = array[randomIndex];
+		array[randomIndex] = temporaryValue;
+	}
+	return array;
+
+};
+
+function createCard(suit, value) {
+	var obj = {};
+	obj.suit = suit;
+	obj.value = value;
+	return obj;
+}
+
+function sleep(ms){
+    return new Promise(resolve=>{
+        setTimeout(resolve,ms)
+    })
+}
+
+function initHands() {
+	var cards = [];
+	cards.push(createCard('trump', 'bigJoker'));
+	cards.push(createCard('trump', 'bigJoker'));
+	cards.push(createCard('trump', 'smallJoker'));
+	cards.push(createCard('trump', 'smallJoker'));
+	for(var suit = 1; suit < 5; suit++) {
+		for(var value = 2; value < 15; value++){
+			cards.push(createCard(suit, value));
+			cards.push(createCard(suit, value));
+		}
+	}
+	
+	cards = shuffle(cards);
+	// console.log(cards);
+	// console.log(cards.length);
+	var hand1 = cards.slice(0,25);
+	var hand2 = cards.slice(25,50);
+	var hand3 = cards.slice(50,75);
+	var hand4 = cards.slice(75,100);
+	var bottom = cards.slice(100,108);
+	return [hand1, hand2, hand3, hand4, bottom];
+
+}
 
 // setInterval(function() {
 //   io.sockets.emit('message', 'test!');
