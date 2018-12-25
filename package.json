@@ -1,0 +1,23 @@
+{
+  "name": "tractor",
+  "version": "1.0.0",
+  "description": "online tractor",
+  "main": "index.js",
+  "scripts": {
+    "start": "node source/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eric-qian-d/Tractor.git"
+  },
+  "author": "Eric Qian",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/eric-qian-d/Tractor/issues"
+  },
+  "homepage": "https://github.com/eric-qian-d/Tractor#readme",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.2.0"
+  }
+}
