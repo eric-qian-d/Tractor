@@ -12,8 +12,45 @@ var stringToCard = new Map;
 // socket.on('message', function(data) {
 //   console.log(data);
 // });
-function renderHandDealing() {
+function renderHandDealing(data) {
   console.log('rendering hand');
+  hand1 = []; //spades
+  hand2 = []; //hearts
+  hand3 = []; //clubs
+  hand4 = []; //diamonds
+  trump = [];
+  cards = data[0];
+  console.log(hand1, hand2, hand3, hand4, trump);
+  console.log(data[1], data[2]);
+  for(var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var suit = card.suit;
+    var value = card.value;
+    if(suit == data[1] || value == data[2] || suit == 'T') {
+      if(value == data[2]) {
+        if(suit == data[1]) {
+          card.power = 16;
+        }
+        else {
+          card.power = 15;
+        }
+      }
+      trump.push(card);   
+    }
+    else if(suit == 1){
+      hand1.push(card);
+    }
+    else if(suit == 2){
+      hand2.push(card);
+    }
+    else if(suit == 3){
+      hand3.push(card);
+    }
+    else{
+      hand4.push(card);
+    }
+    
+  }
   trump.sort(function(a, b){return a.power - b.power});
   hand1.sort(function(a, b){return a.power - b.power});
   hand2.sort(function(a, b){return a.power - b.power});
@@ -44,15 +81,18 @@ function renderSuit(cards, div) {
 		newCard.setAttribute('src', '/static/images/cards/' + cards[i].value.toString() + '-' + cards[i].suit.toString() + '.png');
 		newCard.setAttribute('id', cards[i].value.toString() + '-' + cards[i].suit.toString() + '-' + cards[i].deck.toString());
 		newCard.addEventListener('click', function() {
-			if (selected.get(cards[i])) {
-				selected.delete(cards[i]);
+			
+			if (selected.get((this.id))) {
+				selected.delete(stringToCard.get(this.id));
 				this.style.border = '0px';
+				console.log('changing to unbordered');
 			}
 			else {
-				selected.set(cards[i], true) 
+				selected.set((this.id), true) ;
 				this.style.border = '1px';
 				this.style.borderColor = 'black';
 				this.style.borderStyle = 'solid';
+				console.log('changing to bordered');
 			}
 		});
 		stringToCard.set(cards[i].value.toString() + '-' + cards[i].suit.toString() + '-' + cards[i].deck.toString(), cards[i]);
@@ -76,8 +116,21 @@ document.getElementById('joinButton').addEventListener('click', function(){
 
 document.getElementById('playButton').addEventListener('click', function() {
   console.log('clicked play button');
-  socket.emit('play', 1);
+  console.log(selected);
+  var toPlay = [];
+  for(var card of selected.entries());
+    console.log(card);
+    toPlay.push(card[0]);
+  console.log(toPlay);
+  socket.emit('play', toPlay);
 });
+
+socket.on('played', function(data) {
+	console.log('legal move!');
+  selected = new Map;
+  renderHandDealing(data);
+
+})
 
 socket.on('game created', function(data){
   console.log('game created success!');
@@ -135,7 +188,7 @@ socket.on('deal card', function(data) {
   else{
     hand4.push(card);
   }
-  renderHandDealing();
+  renderHandDealing(data);
 });
 
 socket.on('cards dealt', function(data) {
@@ -152,43 +205,7 @@ socket.on('turn', function(turn) {
 
 socket.on('finalize hand', function(data) {
 	console.log('finalizing hand!');
-  hand1 = []; //spades
-  hand2 = []; //hearts
-  hand3 = []; //clubs
-  hand4 = []; //diamonds
-  trump = [];
-  cards = data[0];
-  console.log(hand1, hand2, hand3, hand4, trump);
-  console.log(data[1], data[2]);
-  for(var i = 0; i < 25; i++) {
-    var card = cards[i];
-    var suit = card.suit;
-    var value = card.value;
-    if(suit == data[1] || value == data[2] || suit == 'T') {
-      if(value == data[2]) {
-        if(suit == data[1]) {
-          card.power = 16;
-        }
-        else {
-          card.power = 15;
-        }
-      }
-      trump.push(card);   
-    }
-    else if(suit == 1){
-      hand1.push(card);
-    }
-    else if(suit == 2){
-      hand2.push(card);
-    }
-    else if(suit == 3){
-      hand3.push(card);
-    }
-    else{
-      hand4.push(card);
-    }
-    
-  }
-  renderHandDealing();
+  
+  renderHandDealing(data);
 });
 
