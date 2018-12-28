@@ -414,8 +414,6 @@ function updateHand(player, game) {
         else {
           card.power = 15;
         }
-
-
       }
 
       card.playingSuit = 'T'; //TENTATIVE
@@ -436,128 +434,133 @@ function updateHand(player, game) {
 	}
 }
 
-// setInterval(function() {
-// 	console.log('the individual messages', individualMessages);
-// 	for(var [playerId, data] of individualMessages) {
-// 		io.to(playerId).emit(data[0], data[1]);
-// 	}
-// 	individualMessages = new Map();
-// 	for(var [gameId, game] of liveGames) {
-// 		console.log(game.state);
-// 		if(game.state == 'dealing') {
-// 			game.state = 'declaring'; //to remove when not testing
-// 			for(var [playerId, player] of game.players) {
-// 				// console.log(player.hand[0], game.currentCardToDeal);
-// 				console.log('dealing card');
-// 				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.trumpSuit, game.players.get(playerId).level]);
-// 			}
-// 			game.currentCardToDeal++;
-// 			if(game.currentCardToDeal == 26) {
-// 				game.state = 'declaring';
-// 			}
-// 		}
-// 		else if(game.state == 'declaring') {
-// 			//logic
-// 			game.timeElapsed = 10;
-// 			if(game.timeElapsed == 10) {
-// 				if(!game.trumpSuit) {
-// 					game.trumpSuit = 2;
-// 					game.trumpNum = 2;
-// 					game.currentPlayer = game.playerNumberToId.get(1);
-// 					game.roundStartingPlayerNum = 1;
-// 				}
-// 				for(var [playerId, player] of game.players) {
-// 						console.log('finalizing hand');
-// 						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
-// 						updateHand(player, game);
-// 				}
-// 				game.state = 'playing'; 
-// 				game.timeElapsed = 0;
-// 				//logic for setting declarer to round starting player (use player number!)
-// 			}
-// 		}
-// 		else if(game.state == 'playing') {
-// 			if(game.played) {
-// 				console.log('in game.played');
-// 				io.to(game.currentPlayer).emit('played', game.players.get(game.currentPlayer).lastPlayed);
-// 				game.roundPlayersPlayed++;
-// 				game.currentPlayer = game.playerNumberToId(game.order[game.roundPlayersPlayed + game.roundStartingPlayerNum]);
-// 				game.timeElapsed = 0;
-// 				game.played = false;
-// 				console.log('emitted played');
-// 			}
-// 			else if(game.roundPlayersPlayed == game.numPlayers) {
-// 				//logic for evaluating who wins
-// 				console.log('in evaluating who wins');
+setInterval(function() {
+	console.log('the individual messages', individualMessages);
+	for(var [playerId, data] of individualMessages) {
+		io.to(playerId).emit(data[0], data[1]);
+	}
+	individualMessages = new Map();
+	for(var [gameId, game] of liveGames) {
+		console.log(game.state);
+		if(game.state == 'dealing') {
+			game.state = 'declaring'; //to remove when not developing and testing
+			for(var [playerId, player] of game.players) {
+				// console.log(player.hand[0], game.currentCardToDeal);
+				console.log('dealing card');
+				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.trumpSuit, game.players.get(playerId).level]);
+			}
+			game.currentCardToDeal++;
+			if(game.currentCardToDeal == 26) {
+				game.state = 'declaring';
+			}
+		}
+		else if(game.state == 'declaring') {
+			//logic
+			game.timeElapsed = 10;
+			if(game.timeElapsed == 10) {
+				if(!game.trumpSuit) {
+					game.trumpSuit = 2;
+					game.trumpNum = 2;
+					game.currentPlayer = game.playerNumberToId.get(1);
+					game.roundStartingPlayerNum = 1;
+				}
+				for(var [playerId, player] of game.players) {
+						console.log('finalizing hand');
+						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
+						updateHand(player, game);
+				}
+				game.state = 'playing'; 
+				game.timeElapsed = 0;
+				//logic for setting declarer to round starting player (use player number!)
+			}
+		}
+		else if(game.state == 'playing') {
+			if(game.played) {
+				console.log('in game.played');
+				io.to(game.currentPlayer).emit('played', game.players.get(game.currentPlayer).lastPlayed);
+				game.roundPlayersPlayed++;
+				game.currentPlayer = game.playerNumberToId.get(game.order[game.roundPlayersPlayed + game.roundStartingPlayerNum]);
+				game.timeElapsed = 0;
+				game.played = false;
+				console.log('emitted played');
+			}
+			else if(game.roundPlayersPlayed == game.numPlayers) {
+				//logic for evaluating who wins
+				console.log('in evaluating who wins');
 
-// 				var big = null;
-// 				var points = 0;
-// 				if(game.roundNumCards == 1) {
-// 					for(i = 0; i < game.numPlayers; i++) {
-// 						var playerId = game.playerNumberToId.get(game.order[game.roundStartingPlayerNum + i]);
-// 						var player = game.players.get(playerId);
-// 						card = game.stringToCard.get(player.lastPlayed[0]);
-// 						if(big == null) {
-// 							big = [player, card];
-// 						}
-// 						else {
-// 							if(((card.power > big[1].power) && (card.playingSuit == 'T' || card.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card.playingSuit == 'T')) {
-// 								big = [player, card];
-// 							}
-// 						}
-// 						points += card.points;
-// 					}
-// 				}
-// 				else if (game.roundNumCards == 2) {
-// 					for(var [playerId, player] of game.players) {
-// 						var playerId = game.playerNumberToId.get(game.order[game.roundStartingPlayerNum + i]);
-// 						var player = game.players.get(playerId);
-// 						card1 = game.stringToCard.get(player.lastPlayed[0]);
-// 						card2 = game.stringToCard.get(player.lastPlayed[1]);
-// 						if(big == null) {
-// 							big = [player, card1];
-// 						}
-// 						else {
-// 							var pair = false;
-// 							if(card1.power == card2.power && card1.playingSuit == card2.playingSuit) {
-// 								pair = true;
-// 							}
-// 							if(pair && (((card1.power > big[1].power) && (card1.playinSuit == 'T' || card1.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card1.playingSuit == 'T'))) {
-// 								big = [player, card1];
-// 							}
-// 						}
-// 						points += card1.points;
-// 						points += card2.points;
-// 					}
-// 				}
-// 				big[0].points += points;
-// 				game.roundStartingPlayerNum = big[0].num;
-// 				game.roundPlayersPlayed = 0;
-// 				game.currentPlayer = game.playerNumberToId.get(game.roundStartingPlayerNum);
-// 				io.to(game.id).emit('round winner', [big[0], game]);
-// 			}
-// 			else {
-// 				console.log('in the timing piece');
+				var big = null;
+				var points = 0;
+				if(game.roundNumCards == 1) {
+					for(i = 0; i < game.numPlayers; i++) {
+						var playerId = game.playerNumberToId.get(game.order[game.roundStartingPlayerNum + i]);
+						var player = game.players.get(playerId);
+						card = game.stringToCard.get(player.lastPlayed[0]);
+						if(big == null) {
+							big = [player, card];
+						}
+						else {
+							if(((card.power > big[1].power) && (card.playingSuit == 'T' || card.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card.playingSuit == 'T')) {
+								big = [player, card];
+							}
+						}
+						points += card.points;
+					}
+				}
+				else if (game.roundNumCards == 2) {
+					for(var [playerId, player] of game.players) {
+						var playerId = game.playerNumberToId.get(game.order[game.roundStartingPlayerNum + i]);
+						var player = game.players.get(playerId);
+						card1 = game.stringToCard.get(player.lastPlayed[0]);
+						card2 = game.stringToCard.get(player.lastPlayed[1]);
+						if(big == null) {
+							big = [player, card1];
+						}
+						else {
+							var pair = false;
+							if(card1.power == card2.power && card1.playingSuit == card2.playingSuit) {
+								pair = true;
+							}
+							if(pair && (((card1.power > big[1].power) && (card1.playinSuit == 'T' || card1.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card1.playingSuit == 'T'))) {
+								big = [player, card1];
+							}
+						}
+						points += card1.points;
+						points += card2.points;
+					}
+				}
+				big[0].points += points;
+				game.roundStartingPlayerNum = big[0].num;
+				game.roundPlayersPlayed = 0;
+				game.currentPlayer = game.playerNumberToId.get(game.roundStartingPlayerNum);
+				io.to(game.id).emit('round winner', [big[0], game]);
+			}
+			else {
+				console.log('in the timing piece');
 
-// 				if(game.timeElapsed == 0) {
-// 					console.log('emitting turn');
-// 					io.to(game.id).emit('turn', game.order[game.roundStartingPlayerNum + game.roundPlayersPlayed]);
-// 					console.log('turn emitted');
-// 				}
-// 				else if(game.timeElapsed > 30) {
-// 					console.log('over time!');
-// 					//logic for random play
-// 				}
-// 				else {
-// 					console.log('emitting time');
-// 					io.to(game.id).emit('time', game.timeElapsed);
-// 					console.log('time emitted');
-// 				}
-// 				game.timeElapsed++;
-// 			}
-// 		}
-// 		console.log('game ', game.id, ' finished broadcasting');
-// 	}
-// 	console.log('done broadcasting this second');
-//   // io.sockets.emit('message', 'test!');
-// }, 1000);
+				if(game.timeElapsed == 0) {
+					console.log('emitting turn');
+					io.to(game.id).emit('turn', game.order[game.roundStartingPlayerNum + game.roundPlayersPlayed]);
+					console.log('turn emitted');
+				}
+				else if(game.timeElapsed > 30) {
+					console.log('over time!');
+					//logic for random play
+				}
+				else {
+					console.log('emitting time');
+					io.to(game.id).emit('time', game.timeElapsed);
+					console.log('time emitted');
+				}
+				game.timeElapsed++;
+			}
+		}
+		console.log('game ', game.id, ' finished broadcasting');
+	}
+	console.log('done broadcasting this second');
+  // io.sockets.emit('message', 'test!');
+}, 1000);
+
+setInterval(function() {
+	console.log('test');
+
+}, 1000);
