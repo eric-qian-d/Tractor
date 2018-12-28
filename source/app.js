@@ -25,13 +25,14 @@ server.listen(3000, function() {
 
 var liveGames = new Map;
 var waitingGames = new Map;
+var individualMessages = new Map;
 var players = new Map;
 io.on('connection', function(socket) {
   socket.on('create game', function(gameId) {
   	console.log('creating game...');
   	if (liveGames.has(gameId) || waitingGames.has(gameId)) {
-  		io.to(socket.id).emit('already used id', gameId);
-  		console.log('id already in use');
+  		individualMessages.set(socket.id, ['already used id', gameId]);
+  		// io.to(socket.id).emit('already used id', gameId);
   	}
   	else{
   		socket.join(gameId);
@@ -41,36 +42,42 @@ io.on('connection', function(socket) {
   		}
   		waitingGames.set(gameId, game);
   		players.set(socket.id, gameId);
-  		io.to(socket.id).emit('game created', gameId);
-  		console.log('successfully created');
+  		individualMessages.set(socket.id, ['game created', gameId]);
+  		// io.to(socket.id).emit('game created', gameId);
+  		
   	}
   });
   socket.on('join game', function(gameId) {
+  	console.log(waitingGames, liveGames);
   	if (liveGames.has(gameId)) {
-    	io.to(socket.id).emit('invalid id', gameId);
+  		individualMessages.set(socket.id, ['invalid id', gameId]);
+    	// io.to(socket.id).emit('invalid id', gameId);
     }
     else if (waitingGames.has(gameId)) {
     	var game = waitingGames.get(gameId);
     	if (game.players.has(socket.id)) {
-    		io.to(socket.id).emit('game already joined', gameId);
+    		individualMessages.set(socket.id, ['game already joined', gameId]);
+    		// io.to(socket.id).emit('game already joined', gameId);
     	} 
     	else{
 	    	socket.join(gameId);
 	    	players.set(socket.id, gameId);
 	    	game.players.set(socket.id, game.players.size + 1);
 	    	game.playerOrder.push(socket.id);
-	    	io.to(socket.id).emit('game joined', gameId);
-	    	// console.log(game.players);
 	    	if (game.players.size == 2) {
-	    		io.to(gameId).emit('game initializing', gameId);
-	    		// io.to(gameId).emit('a', gameId);
-	    		console.log('initializing game for ', gameId);
 	    		waitingGames.delete(gameId);
 	    		var playerOrderMap = new Map;
 	    		for(var i = 0; i < game.playerOrder.length; i++) {
 	    			playerOrderMap.set(i + 1, game.playerOrder[i]);
 	    		}	    		
 	    		var newLiveGame = {
+	    			state : 'dealing',
+	    			currentCardToDeal : 0,
+	    			currentPlayer : null,
+	    			peoplePlayed : 0,
+	    			timeElapsed : 0,
+	    			played : false, 
+
 	    			id : gameId,
 	    			numPlayers: 4, //to change
 	    			numDecks: 2, //to change
@@ -109,17 +116,18 @@ io.on('connection', function(socket) {
 	    	}
     	}
     else {
-    	io.to(socket.id).emit('invalid id', gameId);
+    	// io.to(socket.id).emit('invalid id', gameId);
+    	individualMessages.set(socket.id, ['invalid id', gameId]);
     }
   });
   socket.on('play', function(cards) {
   	console.log('in play fucntion');
-  	console.log()
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
   	if (game){
+  		var player = game.players.get(socket.id);
   		// console.log(game.playerIdToNumber.get(socket.id), game.roundStartingPlayer, game.roundPlayersPlayed);
-	  	if(game.playerIdToNumber.get(socket.id) == game.order[game.roundStartingPlayer + game.roundPlayersPlayed]){
+	  	if(socket.id == game.currentPlayer){
 	  		// console.log('correct player');
 	  		var first = false;
 	  		if(game.roundPlayersPlayed == 0) {
@@ -127,10 +135,8 @@ io.on('connection', function(socket) {
 	  			game.cardsPlayed += game.roundNumCards;
 	  			first = true;
 	  		}
-	  		var player = game.players.get(socket.id);
+	  		
 	  		var legal = true;
-	  		io.to(player.id).emit('game created', game.id);
-	  		io.to(socket).emit('game created', game.id);
 	  		//logic for legal play
 
 	  		// console.log(game.roundSuit, game.roundNumCards);
@@ -154,28 +160,28 @@ io.on('connection', function(socket) {
 	  		// console.log(cardsArr);
 	  		cardsArr.sort(function(a, b){return a.power - b.power});
 	  		if(!inHand) { //check that player has these cards
-	  			io.to(player.id).emit('cards arent in hand', game.id);
+	  			// io.to(player.id).emit('cards arent in hand', game.id);
 	  			legal = false;
 	  		}
 	  		if(first && cardsArr.length > 1) {
 	  			if(cardsArr.length == 2) {
 	  				if(cardsArr[0].suit != cardsArr[1].playingSuit) { //check that suit is legal
-		  				io.to(player.id).emit('invalid start', game.id);
+		  				// io.to(player.id).emit('invalid start', game.id);
 		  				legal = false;
 		  			}
 	  				else if(cardsArr[0].power != cardsArr[1].power) { //checks for playing a pair
-	  					io.to(player.id).emit('invalid start', game.id);
+	  					// io.to(player.id).emit('invalid start', game.id);
 	  					legal = false;
 	  				}
 	  			}
 	  		}
 	  		if(!first) {
 	  			if(game.roundNumCards != cardsArr.length) { //check that same number of cards is being played
-  					io.to(player.id).emit('invalid hand', game.id);
+  					// io.to(player.id).emit('invalid hand', game.id);
   				}
 	  			if(game.roundNumCards == 1) {
 	  				if(game.roundSuit != cardsArr[0].playingSuit && player.split.get(game.roundSuit).length != 0) { //check for same suit
-	  					io.to(player.id).emit('invalid hand', game.id);
+	  					// io.to(player.id).emit('invalid hand', game.id);
 	  					legal = false;
 	  				}
 	  			}
@@ -186,7 +192,7 @@ io.on('connection', function(socket) {
 						var powerMap = new Map();
 						// console.log('suitcards', suitCards);
 						for(var i = 0; i < suitCards.length; i++) {
-							console.log(suitCards[i], powerMap, powerMap.has(suitCards[i]));
+							// console.log(suitCards[i], powerMap, powerMap.has(suitCards[i]));
 							if(!(powerMap.has(suitCards[i].power))) {
 								powerMap.set(suitCards[i].power, 1)
 							}
@@ -204,23 +210,23 @@ io.on('connection', function(socket) {
 
 
 		  			if(game.roundNumCards == 2) {
-		  				console.log('checking pairs', cardsArr[0].power, cardsArr[1].power, hasPair, (cardsArr[0].power != cardsArr[1].power));
+		  				// console.log('checking pairs', cardsArr[0].power, cardsArr[1].power, hasPair, (cardsArr[0].power != cardsArr[1].power));
 		  				if(player.split.get(game.roundSuit).length >= 2) { 
 		  					if(game.roundSuit != cardsArr[0].playingSuit || game.roundSuit != cardsArr[1].playingSuit) {//check that you're exhausing your suit
-		  						io.to(player.id).emit('invalid hand', game.id);
+		  						// io.to(player.id).emit('invalid hand', game.id);
 		  						legal = false;
 		  					}
 		  					else{//check that you are playing pairs
 
 		  						if(hasPair && (cardsArr[0].power != cardsArr[1].power)) {
-		  							io.to(player.id).emit('invalid hand', game.id);
+		  							// io.to(player.id).emit('invalid hand', game.id);
 		  							legal = false;
 		  						}		
 		  					}
 		  					
 		  				}
 		  				else if(!(game.roundSuit == cardsArr[0].playingSuit || game.roundSuit == cardsArr[1].playingSuit) && player.split.get(game.roundSuit).length == 1) { //check that you're exhasuting your suit
-		  				io.to(player.id).emit('invalid hand', game.id);
+		  				// io.to(player.id).emit('invalid hand', game.id);
 		  					legal = false;
 		  				}
 		  			}
@@ -228,7 +234,7 @@ io.on('connection', function(socket) {
 	  		}
 	  		if(legal) {
 	  			// console.log('LEGAL');
-	  			game.roundPlayersPlayed ++;
+	  			// game.roundPlayersPlayed ++;
 	  			if(first) {
 	  				if(cardsArr[0].playings == 'T') {
 	  					game.roundSuit = 'T';
@@ -257,9 +263,11 @@ io.on('connection', function(socket) {
 	  			player.hand = updatedHand;	
 	  			}
 	  			updateHand(player, game);
+	  			game.played = true;
+	  			player.lastPlayed = cards;
 					// console.log(player.get('hand').length);
 
-					io.to(player.id).emit('played', cards);
+					
 					}
 				
 	  		
@@ -285,58 +293,6 @@ async function newGame(gameId){
 	// console.log(res[4], res[5], res.length);
 	game.bottom = res[res.length - 2];
 	game.stringToCard = res[res.length - 1];
-
-	// console.log(game);
-	for(var i = 0; i < game.handSize; i++){
-		for(var j = 0; j < game.numPlayers; j++) {
-			var playerId = game.playerNumberToId.get(j + 1);
-			io.to(playerId).emit('deal card', [game.players.get(playerId).hand[i], game.players.get(playerId).level]);
-		}
-		await sleep(1);
-	}
-	io.to(game.id).emit('cards dealt', game.id);
-	// console.log('finished dealing to ', game.id);
-	//logic for declaring and countdown
-
-
-	if(!liveGames.get(game.id).trumpNum){
-		liveGames.get(game.id).trumpNum = 2;
-		liveGames.get(game.id).trumpSuit = 2;
-	}
-	for(var i = 0; i < game.numPlayers; i++) {
-		var playerId = game.playerNumberToId.get(i + 1);
-		var player = game.players.get(playerId);
-		io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
-		updateHand(player, game);
-	}
-	console.log('finalized game', game);
-
-	//logic for getting the bottom cards
-
-	while(game.cardsPlayed < game.handSize) {
-		var playersPlayed = 0;
-		console.log(game.cardsPlayed, game.handSize);
-		while(playersPlayed < 2) { //while(playersPlayed < game.numPlayers) {
-			var t = 0;
-			io.to(game.id).emit('turn', game.roundStartingPlayer + playersPlayed);
-			while(t < 30) {
-				await sleep(1000);
-				io.to(game.id).emit('time', t);
-				t++;
-				// console.log(game.roundPlayersPlayed, playersPlayed);
-				if(game.roundPlayersPlayed > playersPlayed) {
-					break;
-				}
-			}
-			if(t == 30) {
-				//logic for random card played
-				console.log('ran out of time!');
-			}
-			playersPlayed++;
-		}
-		game.roundPlayersPlayed = 0;
-	}
-	console.log('seemingly finished?');
 }
 
 function shuffle (array) {
@@ -476,6 +432,78 @@ function updateHand(player, game) {
 	  }
 	}
 }
-// setInterval(function() {
-//   io.sockets.emit('message', 'test!');
-// }, 1000);
+
+setInterval(function() {
+	for(var [playerId, data] of individualMessages) {
+		io.to(playerId).emit(data[0], data[1]);
+	}
+	individualMessages = new Map();
+	for(var [gameId, game] of liveGames) {
+		console.log(game.state);
+		if(game.state == 'dealing') {
+			game.state = 'declaring'; //to remove when not testing
+			for(var [playerId, player] of game.players) {
+				// console.log(player.hand[0], game.currentCardToDeal);
+				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.trumpSuit, game.players.get(playerId).level]);
+			}
+			game.currentCardToDeal++;
+			if(game.currentCardToDeal == 26) {
+				game.state = 'declaring';
+			}
+		}
+		if(game.state == 'declaring') {
+			//logic
+			game.timeElapsed = 10;
+			if(game.timeElapsed == 10) {
+				if(!game.trumpSuit) {
+					game.trumpSuit = 2;
+					game.trumpNum = 2;
+					game.currentPlayer = game.playerNumberToId.get(1);
+				}
+				for(var [playerId, player] of game.players) {
+					if(game.state == 'declaring') {
+						console.log('in here?');
+						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
+						updateHand(player, game);
+					}
+					
+				}
+				game.state = 'playing'; 
+				game.timeElapsed = 0;
+				//logic for setting declarer to round starting player (use player number!)
+			}
+		}
+		if(game.state == 'playing') {
+			if(game.played) {
+				console.log()
+				io.to(game.currentPlayer).emit('played', game.players.get(game.currentPlayer).lastPlayed, );
+				game.peoplePlayed++;
+				game.roundPlayersPlayed++;
+				game.currentPlayer = game.playerNumberToId.get(game.peoplePlayed + game.roundStartingPlayer);
+				game.timeElapsed = 0;
+				game.played = false;
+			}
+			if(game.peoplePlayed == game.numPlayers) {
+				//logic for evaluating who wins
+				console.log('to implement');
+				game.roundPlayersPlayed = 0; 
+			}
+			else {
+				if(game.timeElapsed == 0) {
+					io.to(game.id).emit('turn', game.roundStartingPlayer + game.peoplePlayed);
+				}
+				if(game.timeElapsed > 30) {
+					console.log('over time!');
+					//logic for random play
+				}
+				else {
+					io.to(game.id).emit('time', game.timeElapsed);
+				}
+				game.timeElapsed++;
+			}
+
+
+		}
+	}
+  // io.sockets.emit('message', 'test!');
+}, 1000);

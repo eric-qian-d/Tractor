@@ -1,10 +1,10 @@
 var socket = io();
 
-var hand1; //spades
-var hand2; //hearts
-var hand3; //clubs
-var hand4; //diamonds
-var trump;
+var hand1 = []; //spades
+var hand2 = []; //hearts
+var hand3 = []; //clubs
+var hand4 = []; //diamonds
+var trump = [];
 
 var selected = new Map;
 
@@ -21,7 +21,7 @@ function renderHandDealing(data) {
   trump = [];
   cards = data[0];
   console.log(hand1, hand2, hand3, hand4, trump);
-  console.log(data[1], data[2]);
+  console.log(data[0], data[1], data[2]);
   for(var i = 0; i < cards.length; i++) {
     var card = cards[i];
     var suit = card.suit;
@@ -174,27 +174,41 @@ socket.on('game initializing', function(data){
 });
 
 socket.on('deal card', function(data) {
-  // console.log('hand ', data[0]);
+  console.log('hand ', data[0]);
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
   if(value == data[1] || suit == 'T') {
     trump.push(card);
-    trump.sort();
+    trump.sort(function(a, b){return a.power - b.power});
+    var trumpDiv = document.getElementById('trumpDiv');
+    renderSuit(trump, trumpDiv)
   }
   else if(suit == 1){
     hand1.push(card);
+    hand1.sort(function(a, b){return a.power - b.power});
+    var spadesDiv = document.getElementById('spadesDiv');
+    renderSuit(hand1, spadesDiv)
   }
   else if(suit == 2){
     hand2.push(card);
+    hand2.sort(function(a, b){return a.power - b.power});
+    var heartsDiv = document.getElementById('heartsDiv');
+    renderSuit(hand2, heartsDiv)
   }
   else if(suit == 3){
     hand3.push(card);
+    hand3.sort(function(a, b){return a.power - b.power});
+    var clubsDiv = document.getElementById('clubsDiv');
+    renderSuit(hand3, clubsDiv)
   }
   else{
     hand4.push(card);
+    hand4.sort(function(a, b){return a.power - b.power});
+    var diamondsDiv = document.getElementById('diamondsDiv');
+    renderSuit(hand4, diamondsDiv)
   }
-  renderHandDealing(data);
+  // renderHandDealing(data);
 });
 
 socket.on('cards dealt', function(data) {
