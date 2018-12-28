@@ -82,13 +82,15 @@ function renderSuit(cards, div) {
 		newCard.setAttribute('id', cards[i].value.toString() + '-' + cards[i].suit.toString() + '-' + cards[i].deck.toString());
 		newCard.addEventListener('click', function() {
 			
-			if (selected.get((this.id))) {
-				selected.delete(stringToCard.get(this.id));
+			if (selected.get(this.id)) {
+				selected.delete(this.id);
 				this.style.border = '0px';
+        console.log(selected)
 				console.log('changing to unbordered');
 			}
 			else {
-				selected.set((this.id), true) ;
+				selected.set(this.id, true) ;
+        console.log(selected);
 				this.style.border = '1px';
 				this.style.borderColor = 'black';
 				this.style.borderStyle = 'solid';
@@ -116,19 +118,23 @@ document.getElementById('joinButton').addEventListener('click', function(){
 
 document.getElementById('playButton').addEventListener('click', function() {
   console.log('clicked play button');
-  console.log(selected);
   var toPlay = [];
-  for(var card of selected.entries());
-    console.log(card);
-    toPlay.push(card[0]);
+  for(var [k, v] of selected) {
+    console.log(k, v)
+    toPlay.push(k);
+  }
   console.log(toPlay);
   socket.emit('play', toPlay);
 });
 
 socket.on('played', function(data) {
-	console.log('legal move!');
+	console.log('legal move!', data);
   selected = new Map;
-  renderHandDealing(data);
+  for(var i = 0; i < data.length; i++) {
+    var card = document.getElementById(data[i]);
+    card.parentNode.removeChild(card);
+  }
+  // renderHandDealing(data);
 
 })
 

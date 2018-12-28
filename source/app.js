@@ -60,30 +60,27 @@ io.on('connection', function(socket) {
 	    	game.players.set(socket.id, game.players.size + 1);
 	    	game.playerOrder.push(socket.id);
 	    	io.to(socket.id).emit('game joined', gameId);
-	    	console.log(game.players);
+	    	// console.log(game.players);
 	    	if (game.players.size == 2) {
 	    		io.to(gameId).emit('game initializing', gameId);
 	    		// io.to(gameId).emit('a', gameId);
 	    		console.log('initializing game for ', gameId);
-	    		waitingGames.delete(gameId);	    		
+	    		waitingGames.delete(gameId);
+	    		var playerOrderMap = new Map;
+	    		for(var i = 0; i < game.playerOrder.length; i++) {
+	    			playerOrderMap.set(i + 1, game.playerOrder[i]);
+	    		}	    		
 	    		var newLiveGame = {
 	    			id : gameId,
-	    			players : game.players, //Map of socket.id => number joined
-	    			order : [null, 1, 2, 3, 4, 1, 2, 3, 4],
+	    			numPlayers: 4, //to change
+	    			numDecks: 2, //to change
+	    			handSize : 25, //to change
+	    			playerIdToNumber : game.players, //Map of socket.id => number joined
+	    			playerNumberToId : playerOrderMap,
+	    			order : [null],
 	    			stringToCard : new Map(),
-
-	    			p1 : new Map([['id', game.playerOrder[0]],
-	    				['hand', null], ['level', 2], ['round', null],
-	    				[1, []], [2, []], [3, []], [4, []], ['T', []]]),
-	    			p2 : new Map([['id', game.playerOrder[1]],
-	    				['hand', null], ['level', 2], ['round', null],
-	    				[1, []], [2, []], [3, []], [4, []], ['T', []]]),
-	    			p3 : new Map([['id', game.playerOrder[2]],
-	    				['hand', null], ['level', 2], ['round', null],
-	    				[1, []], [2, []], [3, []], [4, []], ['T', []]]),
-	    			p4 : new Map([['id', game.playerOrder[3]],
-	    				['hand', null], ['level', 2], ['round', null],
-	    				[1, []], [2, []], [3, []], [4, []], ['T', []]]),
+	    			players : new Map,
+	    			
 	    			bottom : null,
 	    			trumpNum : null,
 	    			trumpSuit : null,
@@ -96,6 +93,15 @@ io.on('connection', function(socket) {
 	    			roundSuit : null,
 	    			roundPointsPlayed : 0
 	    		};
+	    		// console.log('after first init', newLiveGame);
+	    		for(var i = 0; i < newLiveGame.numPlayers; i++) {
+	    			newLiveGame.players.set(newLiveGame.playerNumberToId.get(i + 1), newPlayer(newLiveGame.playerNumberToId.get(i + 1), i + 1));
+	    		}
+	    		for(var i = 0; i < 2; i++) {
+	    			for(var j = 0; j < newLiveGame.numPlayers; j++) {
+	    				newLiveGame.order.push(j + 1);
+	    			}
+	    		}
 	    		liveGames.set(gameId,newLiveGame);
 
 	    		newGame(gameId);
@@ -107,42 +113,33 @@ io.on('connection', function(socket) {
     }
   });
   socket.on('play', function(cards) {
-  	console.log(cards, cards[0]);
+  	console.log('in play fucntion');
+  	console.log()
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
   	if (game){
-  		console.log(game.players.get(socket.id), game.roundStartingPlayer, game.roundPlayersPlayed);
-	  	if(game.players.get(socket.id) == game.order[game.roundStartingPlayer + game.roundPlayersPlayed]){
+  		// console.log(game.playerIdToNumber.get(socket.id), game.roundStartingPlayer, game.roundPlayersPlayed);
+	  	if(game.playerIdToNumber.get(socket.id) == game.order[game.roundStartingPlayer + game.roundPlayersPlayed]){
+	  		// console.log('correct player');
 	  		var first = false;
 	  		if(game.roundPlayersPlayed == 0) {
 	  			game.roundNumCards = 0;//to fix for actually adjusting!
 	  			game.cardsPlayed += game.roundNumCards;
 	  			first = true;
 	  		}
-	  		var player;
+	  		var player = game.players.get(socket.id);
 	  		var legal = true;
-	  		if(game.players.get(socket.id) == 1){
-	  			player = game.p1;
-	  		}
-	  		else if(game.players.get(socket.id) == 2){
-	  			player = game.p2;
-	  		}
-	  		else if(game.players.get(socket.id) == 3){
-	  			player = game.p3;
-	  		}
-	  		else{
-	  			player = game.p4;
-	  		}
-	  		io.to(player.get('id')).emit('game created', game.id);
+	  		io.to(player.id).emit('game created', game.id);
 	  		io.to(socket).emit('game created', game.id);
 	  		//logic for legal play
-	  		console.log(game.roundSuit, game.roundNumCards);
+
+	  		// console.log(game.roundSuit, game.roundNumCards);
 	  		var cardsArr = []
 	  		var inHand = true;
 	  		var consistentSuit = true;
 	  		for(var i = 0; i < cards.length; i++) {
 	  			card = game.stringToCard.get(cards[i]);
-	  			console.log('strind and card', cards[i], card);
+	  			// console.log('strind and card', cards[i], card);
 	  			// for(var j = 0; j < player.hand.length; j++) {
 	  			// 	if(!(card in player.get('hand'))) {
 		  		// 		inHand = false;
@@ -154,115 +151,115 @@ io.on('connection', function(socket) {
 	  			}
 	  			cardsArr.push(card)
 	  		}
-	  		console.log(cardsArr);
+	  		// console.log(cardsArr);
 	  		cardsArr.sort(function(a, b){return a.power - b.power});
 	  		if(!inHand) { //check that player has these cards
-	  			io.to(player.get('id')).emit('cards arent in hand', game.id);
+	  			io.to(player.id).emit('cards arent in hand', game.id);
 	  			legal = false;
 	  		}
-	  		console.log('1', legal);
 	  		if(first && cardsArr.length > 1) {
-	  			
 	  			if(cardsArr.length == 2) {
-	  				if(cardArr[0].suit != cardArr[1].suit) { //check that suit is legal
-		  				io.to(player.get('id')).emit('invalid start', game.id);
+	  				if(cardsArr[0].suit != cardsArr[1].playingSuit) { //check that suit is legal
+		  				io.to(player.id).emit('invalid start', game.id);
 		  				legal = false;
 		  			}
-	  				else if(cardArr[0].power != cardArr[1].power) { //checks for playin a pair
-	  					io.to(player.get('id')).emit('invalid start', game.id);
+	  				else if(cardsArr[0].power != cardsArr[1].power) { //checks for playing a pair
+	  					io.to(player.id).emit('invalid start', game.id);
 	  					legal = false;
 	  				}
 	  			}
 	  		}
 	  		if(!first) {
-	  			if(game.roundNumCards != cardsArr.length) {
-  					io.to(player.get('id')).emit('invalid hand', game.id);
+	  			if(game.roundNumCards != cardsArr.length) { //check that same number of cards is being played
+  					io.to(player.id).emit('invalid hand', game.id);
   				}
 	  			if(game.roundNumCards == 1) {
-	  				if(game.roundSuit != cardsArr[0].suit && player.get(game.roundSuit).length != 0) {
-	  					io.to(player.get('id')).emit('invalid hand', game.id);
+	  				if(game.roundSuit != cardsArr[0].playingSuit && player.split.get(game.roundSuit).length != 0) { //check for same suit
+	  					io.to(player.id).emit('invalid hand', game.id);
 	  					legal = false;
 	  				}
 	  			}
-	  			if(game.roundNumCards == 2) {
-	  				if((game.roundSuit != cardsArr[0].suit || game.roundSuit != cardsArr[1].suit) && player.get(game.roundSuit).length >= 2) {
-	  					io.to(player.get('id')).emit('invalid hand', game.id);
-	  					legal = false;
-	  				}
-	  				else if(!(game.roundSuit == cardsArr[0].suit || game.roundSuit == cardsArr[1].suit) && player.get(game.roundSuit).length == 1) {
-	  				io.to(player.get('id')).emit('invalid hand', game.id);
-	  					legal = false;
-	  				}
+	  			else{
+	  				var hasPair = false;
+						var hasTriple = false;
+						var suitCards = player.split.get(game.roundSuit);
+						var powerMap = new Map();
+						// console.log('suitcards', suitCards);
+						for(var i = 0; i < suitCards.length; i++) {
+							console.log(suitCards[i], powerMap, powerMap.has(suitCards[i]));
+							if(!(powerMap.has(suitCards[i].power))) {
+								powerMap.set(suitCards[i].power, 1)
+							}
+							else {
+								if(powerMap.get(suitCards[i].power) == 1) {
+									hasPair = true;
+									powerMap.set(suitCards[i].power, 2);
+								}
+								else {
+									hasTriple = true;
+									powerMap.set(suitCards[i].power, 3);
+								}
+							}
+						}
 
+
+		  			if(game.roundNumCards == 2) {
+		  				console.log('checking pairs', cardsArr[0].power, cardsArr[1].power, hasPair, (cardsArr[0].power != cardsArr[1].power));
+		  				if(player.split.get(game.roundSuit).length >= 2) { 
+		  					if(game.roundSuit != cardsArr[0].playingSuit || game.roundSuit != cardsArr[1].playingSuit) {//check that you're exhausing your suit
+		  						io.to(player.id).emit('invalid hand', game.id);
+		  						legal = false;
+		  					}
+		  					else{//check that you are playing pairs
+
+		  						if(hasPair && (cardsArr[0].power != cardsArr[1].power)) {
+		  							io.to(player.id).emit('invalid hand', game.id);
+		  							legal = false;
+		  						}		
+		  					}
+		  					
+		  				}
+		  				else if(!(game.roundSuit == cardsArr[0].playingSuit || game.roundSuit == cardsArr[1].playingSuit) && player.split.get(game.roundSuit).length == 1) { //check that you're exhasuting your suit
+		  				io.to(player.id).emit('invalid hand', game.id);
+		  					legal = false;
+		  				}
+		  			}
 	  			}
-
 	  		}
-	  		//check that pair/tractor is legal
 	  		if(legal) {
-	  			console.log('LEGAL');
+	  			// console.log('LEGAL');
 	  			game.roundPlayersPlayed ++;
 	  			if(first) {
-	  				game.roundSuit = cardsArr[0].suit;
+	  				if(cardsArr[0].playings == 'T') {
+	  					game.roundSuit = 'T';
+	  				}
+	  				else{
+	  					game.roundSuit = cardsArr[0].suit;
+	  				}
+	  				
 	  				game.roundNumCards = cardsArr.length;
+	  				game.cardsPlayed += cardsArr.length;
 	  			}
 	  			updatedHand = []
-	  			hand = player.get('hand');
+	  			hand = player.hand;
 	  			for(var i = 0; i < hand.length; i++) {
 	  				toAdd = true;
 	  				for(var j = 0; j < cardsArr.length; j ++) {
-	  					console.log(hand[i], cardsArr[j], hand[i] == cardsArr[j], hand[i] === cardsArr[j]);
+	  					// console.log(hand[i], cardsArr[j], hand[i] == cardsArr[j], hand[i] === cardsArr[j]);
 	  					if (hand[i] == cardsArr[j]) {
 	  						toAdd = false;
 	  					}
 	  				if(toAdd) {
-	  					console.log(toAdd, hand[i]);
+	  					// console.log(toAdd, hand[i]);
 	  					updatedHand.push(hand[i]);
 	  				}
 	  				}
-	  			player.set('hand', updatedHand);	
+	  			player.hand = updatedHand;	
 	  			}
-	  			player.set(1, []);
-	  			player.set(2, []);
-	  			player.set(3, []);
-	  			player.set(4, []);
-	  			player.set('T', []);
-	  			for(var i = 0; i < player.get('hand').length; i++) {
-						var card = player.get('hand')[i];
-					  var suit = card.suit;
-					  var value = card.value;
-					  if(value == game.trumpSuit || value == game.trumpNum || suit == 'T') {
-					    if(value == game.trumpNum) {
-				        if(suit == game.trumpSuit) {
-				          card.power = 16;
-				        }
-				        else {
-				          card.power = 15;
-				        }
-				      }
-				      player.get('T').push(card);   
-					  }
-					  else if(suit == 1){
-					    player.get(1).push(card);
-					  }
-					  else if(suit == 2){
-					    player.get(2).push(card);
-					  }
-					  else if(suit == 3){
-					    player.get(3).push(card);
-					  }
-					  else{
-					    player.get(4).push(card);
-					  }
-					}
-					player.get('T').sort(function(a, b){return a.power - b.power});
-					player.get(1).sort(function(a, b){return a.power - b.power});
-					player.get(2).sort(function(a, b){return a.power - b.power});
-					player.get(3).sort(function(a, b){return a.power - b.power});
-					player.get(4).sort(function(a, b){return a.power - b.power});
-					console.log(player.get('hand').length);
+	  			updateHand(player, game);
+					// console.log(player.get('hand').length);
 
-					io.to(player.get('id')).emit('played', [player.get('hand'), game.trumpSuit, game.trumpNum]);
-					console.log('emitted?', player.get('id'));
+					io.to(player.id).emit('played', cards);
 					}
 				
 	  		
@@ -279,23 +276,26 @@ async function newGame(gameId){
 	var hand3;
 	var hand4;
 	var bottom;
-	[hand1, hand2, hand3, hand4, bottom, stringToCard] = initHands();
-	game.p1.set('hand', hand1);
-	game.p2.set('hand', hand2);
-	game.p3.set('hand', hand3);
-	game.p4.set('hand', hand4);
-	game.bottom = bottom;
-	game.stringToCard = stringToCard;
-	console.log(game);
-	for(var i = 0; i < 25; i++){
-		io.to(game.p1.get('id')).emit('deal card', [game.p1.get('hand')[i], game.p1.get('level')]);
-		io.to(game.p2.get('id')).emit('deal card', [game.p2.get('hand')[i], game.p2.get('level')]);
-		// io.to(game.p3.get('id')).emit('hand', game.p3.get('hand')[i]);
-		// io.to(game.p4.get('id')).emit('hand', game.p4.get('hand')[i]);
+	// console.log(game);
+	res = initHands(game.numPlayers, game.numDecks); //[hand1, hand2, hand3, hand4, bottom, stringToCard]
+	// console.log(res);
+	for(i = 0; i < game.numPlayers - 2; i ++) {
+		game.players.get(game.playerNumberToId.get(i + 1)).hand = res[i];
+	}
+	// console.log(res[4], res[5], res.length);
+	game.bottom = res[res.length - 2];
+	game.stringToCard = res[res.length - 1];
+
+	// console.log(game);
+	for(var i = 0; i < game.handSize; i++){
+		for(var j = 0; j < game.numPlayers; j++) {
+			var playerId = game.playerNumberToId.get(j + 1);
+			io.to(playerId).emit('deal card', [game.players.get(playerId).hand[i], game.players.get(playerId).level]);
+		}
 		await sleep(1);
 	}
 	io.to(game.id).emit('cards dealt', game.id);
-	console.log('finished dealing to ', game.id);
+	// console.log('finished dealing to ', game.id);
 	//logic for declaring and countdown
 
 
@@ -303,153 +303,20 @@ async function newGame(gameId){
 		liveGames.get(game.id).trumpNum = 2;
 		liveGames.get(game.id).trumpSuit = 2;
 	}
-	
-	io.to(game.p1.get('id')).emit('finalize hand', [game.p1.get('hand'), game.trumpSuit, game.trumpNum]);
-	io.to(game.p2.get('id')).emit('finalize hand', [game.p2.get('hand'), game.trumpSuit, game.trumpNum]);
-	// io.to(game.p3.get('id')).emit('hand', game.p3.get('hand')[i]);
-	// io.to(game.p4.get('id')).emit('hand', game.p4.get('hand')[i]);
-	for(var i = 0; i < game.p1.get('hand').length; i++) {
-		var card = game.p1.get('hand')[i];
-	  var suit = card.suit;
-	  var value = card.value;
-	  if(value == game.trumpSuit || value == game.trumpNum || suit == 'T') {
-	    if(value == game.trumpNum) {
-        if(suit == game.trumpSuit) {
-          card.power = 16;
-        }
-        else {
-          card.power = 15;
-        }
-      }
-      game.p1.get('T').push(card);   
-	  }
-	  else if(suit == 1){
-	    game.p1.get(1).push(card);
-	  }
-	  else if(suit == 2){
-	    game.p1.get(2).push(card);
-	  }
-	  else if(suit == 3){
-	    game.p1.get(3).push(card);
-	  }
-	  else{
-	    game.p1.get(4).push(card);
-	  }
+	for(var i = 0; i < game.numPlayers; i++) {
+		var playerId = game.playerNumberToId.get(i + 1);
+		var player = game.players.get(playerId);
+		io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
+		updateHand(player, game);
 	}
-	game.p1.get('T').sort(function(a, b){return a.power - b.power});
-	game.p1.get(1).sort(function(a, b){return a.power - b.power});
-	game.p1.get(2).sort(function(a, b){return a.power - b.power});
-	game.p1.get(3).sort(function(a, b){return a.power - b.power});
-	game.p1.get(4).sort(function(a, b){return a.power - b.power});
-
-	for(var i = 0; i < 25; i++) {
-		var card = game.p2.get('hand')[i];
-	  var suit = card.suit;
-	  var value = card.value;
-	  if(value == game.trumpSuit || value == game.trumpNum || suit == 'T') {
-	    if(value == game.trumpNum) {
-        if(suit == game.trumpSuit) {
-          card.power = 16;
-        }
-        else {
-          card.power = 15;
-        }
-      }
-      game.p2.get('T').push(card);   
-	  }
-	  else if(suit == 1){
-	    game.p2.get(1).push(card);
-	  }
-	  else if(suit == 2){
-	    game.p2.get(2).push(card);
-	  }
-	  else if(suit == 3){
-	    game.p2.get(3).push(card);
-	  }
-	  else{
-	    game.p2.get(4).push(card);
-	  }
-	}
-	game.p2.get('T').sort(function(a, b){return a.power - b.power});
-	game.p2.get(1).sort(function(a, b){return a.power - b.power});
-	game.p2.get(2).sort(function(a, b){return a.power - b.power});
-	game.p2.get(3).sort(function(a, b){return a.power - b.power});
-	game.p2.get(4).sort(function(a, b){return a.power - b.power});
-
-	// for(var i = 0; i < 25; i++) {
-	// 	var card = game.p3.get('hand')[0];
-	//   var suit = card.suit;
-	//   var value = card.value;
-	//   if(value == game.trumpSuit || value == game.trumpNum || suit == 'T') {
-	//     if(value == game.trumpNum) {
- //        if(suit == game.trumpSuit) {
- //          card.power = 16;
- //        }
- //        else {
- //          card.power = 15;
- //        }
- //      }
- //      p3.get('T').push(card);   
-	//   }
-	//   else if(suit == 1){
-	//     p3.get(1).push(card);
-	//   }
-	//   else if(suit == 2){
-	//     p3.get(2).push(card);
-	//   }
-	//   else if(suit == 3){
-	//     p3.get(3).push(card);
-	//   }
-	//   else{
-	//     p3.get(4).push(card);
-	//   }
-	// }
-	// p3.get('T').sort(function(a, b){return a.power - b.power});
-	// p3.get(1).sort(function(a, b){return a.power - b.power});
-	// p3.get(2).sort(function(a, b){return a.power - b.power});
-	// p3.get(3).sort(function(a, b){return a.power - b.power});
-	// p3.get(4).sort(function(a, b){return a.power - b.power});
-
-	// for(var i = 0; i < 25; i++) {
-	// 	var card = game.p4.get('hand')[0];
-	//   var suit = card.suit;
-	//   var value = card.value;
-	//   if(value == game.trumpSuit || value == game.trumpNum || suit == 'T') {
-	//     if(value == game.trumpNum) {
- //        if(suit == game.trumpSuit) {
- //          card.power = 16;
- //        }
- //        else {
- //          card.power = 15;
- //        }
- //      }
- //      p4.get('T').push(card);   
-	//   }
-	//   else if(suit == 1){
-	//     p4.get(1).push(card);
-	//   }
-	//   else if(suit == 2){
-	//     p4.get(2).push(card);
-	//   }
-	//   else if(suit == 3){
-	//     p4.get(3).push(card);
-	//   }
-	//   else{
-	//     p4.get(4).push(card);
-	//   }
-	// }
-	// p4.get('T').sort(function(a, b){return a.power - b.power});
-	// p4.get(1).sort(function(a, b){return a.power - b.power});
-	// p4.get(2).sort(function(a, b){return a.power - b.power});
-	// p4.get(3).sort(function(a, b){return a.power - b.power});
-	// p4.get(4).sort(function(a, b){return a.power - b.power});
-
+	console.log('finalized game', game);
 
 	//logic for getting the bottom cards
-	// console.log()
-	while(game.cardsPlayed <25) {
+
+	while(game.cardsPlayed < game.handSize) {
 		var playersPlayed = 0;
-		while(playersPlayed < 2) { //fix for actual number of players
+		console.log(game.cardsPlayed, game.handSize);
+		while(playersPlayed < 2) { //while(playersPlayed < game.numPlayers) {
 			var t = 0;
 			io.to(game.id).emit('turn', game.roundStartingPlayer + playersPlayed);
 			while(t < 30) {
@@ -469,6 +336,7 @@ async function newGame(gameId){
 		}
 		game.roundPlayersPlayed = 0;
 	}
+	console.log('seemingly finished?');
 }
 
 function shuffle (array) {
@@ -494,6 +362,7 @@ function createCard(suit, value, deck) {
 	obj.value = value;
 	obj.deck = deck
 	obj.power = value;
+	obj.playingSuit = suit;
 	if(value == 'bigJoker'){
 		obj.power = 18;
 	}
@@ -518,10 +387,11 @@ function sleep(ms){
   });
 }
 
-function initHands() {
+function initHands(numPlayers, numDecks) {
+	numDecks = 3; //to change
 	var stringToCard = new Map();
 	var cards = [];
-	for(var deck = 1; deck < 3; deck++) {
+	for(var deck = 1; deck < numDecks; deck++) {
 		for(var value = 2; value < 15; value++){
 			for(var suit = 1; suit < 5; suit++){
 				var newCard = createCard(suit, value, deck);
@@ -538,8 +408,8 @@ function initHands() {
 	}
 	
 	cards = shuffle(cards);
-	console.log(cards);
-	// console.log(cards.length);
+
+	//make variable
 	var hand1 = cards.slice(0,25);
 	var hand2 = cards.slice(25,50);
 	var hand3 = cards.slice(50,75);
@@ -549,6 +419,63 @@ function initHands() {
 
 }
 
+function newPlayer(id, num) {
+	// console.log('making new player');
+	var obj = {};
+	obj.id = id;
+	obj.num = num;
+	obj.level = 2;
+	obj.lastPlayed = null;
+	obj.hand = [];
+	obj.split = new Map;
+	obj.split.set(1, []);
+	obj.split.set(2, []);
+	obj.split.set(3, []);
+	obj.split.set(4, []);
+	obj.split.set('T', []);
+	return obj;
+}
+
+function updateHand(player, game) {
+	player.split.set('T', []);
+	player.split.set(1, []);
+	player.split.set(2, []);
+	player.split.set(3, []);
+	player.split.set(4, []);
+	for(var i = 0; i < player.hand.length; i++) {
+		var card = player.hand[i];
+	  var suit = card.suit;
+	  var value = card.value;
+	  // console.log(value, game.trumpSuit);
+	  if(suit == game.trumpSuit || value == game.trumpNum || suit == 'T') {
+	    if(value == game.trumpNum) {
+        if(suit == game.trumpSuit) {
+          card.power = 16;
+        }
+        else {
+          card.power = 15;
+        }
+
+
+      }
+
+      card.playingSuit = 'T'; //TENTATIVE
+      player.split.get('T').push(card);   
+	  }
+	  else if(suit == 1){
+	    player.split.get(1).push(card);
+	  }
+	  else if(suit == 2){
+	    player.split.get(2).push(card);
+	  }
+	  else if(suit == 3){
+	    player.split.get(3).push(card);
+	  }
+	  else{
+	    player.split.get(4).push(card);
+	  }
+	}
+}
 // setInterval(function() {
 //   io.sockets.emit('message', 'test!');
 // }, 1000);
