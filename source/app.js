@@ -11,13 +11,13 @@ var pages = require('./routes/pages.js');
 
 app.use('/', pages);
 
-app.set('port', 3001);
+app.set('port', 3000);
 app.use('/static', express.static('public'));
 
 // Routing
 
 // Starts the server.
-server.listen(3001, function() {
+server.listen(process.env.PORT || 3000, function() {
   console.log('Starting server on port 3000');
 });
 
