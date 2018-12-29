@@ -128,6 +128,8 @@ io.on('connection', function(socket) {
   });
   socket.on('declare', function(data) {
   	//insert logic for checking that declare is valid
+  	var gameId = players.get(socket.id);
+  	game = liveGames.get(gameId);
   	game.declaringPlayer = socket.id;
   	game.trumpSuit = data;
   	game.announceDeclare = true;
