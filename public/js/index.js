@@ -139,13 +139,13 @@ socket.on('played', function(data) {
 })
 
 socket.on('game created', function(data){
-  console.log('game created success!');
-  console.log(data);
+  var playerInfoDiv = document.getElementById('playerInfo');
+  playerInfoDiv.innerHTML = 'Player 1';
 });
 
 socket.on('game joined', function(data){
-  console.log('game joined success!');
-  console.log(data);
+  var playerInfoDiv = document.getElementById('playerInfo');
+  playerInfoDiv.innerHTML = 'Player ' + data[1].toString();
 });
 
 socket.on('invalid id', function(data){
@@ -170,7 +170,7 @@ socket.on('game initializing', function(data){
   hand3 = []; //clubs
   hand4 = []; //diamonds
   trump = [];
-  console.log(data);
+
 });
 
 socket.on('deal card', function(data) {
@@ -216,16 +216,33 @@ socket.on('cards dealt', function(data) {
 });
 
 socket.on('time', function(time) {
-  console.log('time', time);
+  // console.log('time', time);
+  var timeDiv = document.getElementById('time');
+  timeDiv.innerHTML = 'Time: ' + time.toString();
 });
 
 socket.on('turn', function(turn) {
-  console.log('it is player ', turn, ' turn');
+  var turnDiv = document.getElementById('turn');
+
+  turnDiv.innerHTML = 'it is player ' + turn.toString() +  ' turn';
 });
 
 socket.on('finalize hand', function(data) {
-	console.log('finalizing hand!');
+	var pointsDiv = document.getElementById('points');
+  for(i = 1; i < data[3] + 1; i++) {
+    var newPlayerPoints = document.createElement('div');
+    newPlayerPoints.setAttribute('id', i.toString());
+    newPlayerPoints.innerHTML = 'Player ' + i.toString() + ': 0';
+    pointsDiv.append(newPlayerPoints);
+  }
   
   renderHandDealing(data);
 });
+
+socket.on('round summary', function(data) {
+  for(var [playerNum, points] of data) {
+    var playerPointsDiv = document.getElementById(playerNum);
+    playerPoints.innerHTML = 'Player ' + playerNum + ':' + points.toString();
+  }
+})
 

@@ -11,13 +11,13 @@ var pages = require('./routes/pages.js');
 
 app.use('/', pages);
 
-app.set('port', 3000);
+app.set('port', 3001);
 app.use('/static', express.static('public'));
 
 // Routing
 
 // Starts the server.
-server.listen(3000, function() {
+server.listen(3001, function() {
   console.log('Starting server on port 3000');
 });
 
@@ -60,6 +60,7 @@ io.on('connection', function(socket) {
     		// io.to(socket.id).emit('game already joined', gameId);
     	} 
     	else{
+    		individualMessages.set(socket.id, ['game joined', [gameId, game.players.size + 1]])
 	    	socket.join(gameId);
 	    	players.set(socket.id, gameId);
 	    	game.players.set(socket.id, game.players.size + 1);
@@ -154,7 +155,7 @@ io.on('connection', function(socket) {
 		  		// 	}
 	  			// }
 	  			
-	  			if(card.suit != game.roundSuit) {
+	  			if(card.playingSuit != game.roundSuit) {
 	  				consistentSuit = false;
 	  			}
 	  			cardsArr.push(card)
@@ -167,7 +168,7 @@ io.on('connection', function(socket) {
 	  		}
 	  		if(first && cardsArr.length > 1) {
 	  			if(cardsArr.length == 2) {
-	  				if(cardsArr[0].suit != cardsArr[1].playingSuit) { //check that suit is legal
+	  				if(cardsArr[0].playingSuit != cardsArr[1].playingSuit) { //check that suit is legal
 		  				// io.to(player.id).emit('invalid start', game.id);
 		  				legal = false;
 		  			}
@@ -242,7 +243,7 @@ io.on('connection', function(socket) {
 	  					game.roundSuit = 'T';
 	  				}
 	  				else{
-	  					game.roundSuit = cardsArr[0].suit;
+	  					game.roundSuit = cardsArr[0].playingSuit;
 	  				}
 	  				
 	  				game.roundNumCards = cardsArr.length;
@@ -257,14 +258,17 @@ io.on('connection', function(socket) {
 	  					if (hand[i] == cardsArr[j]) {
 	  						toAdd = false;
 	  					}
+	  				}
 	  				if(toAdd) {
 	  					// console.log(toAdd, hand[i]);
 	  					updatedHand.push(hand[i]);
 	  				}
-	  				}
-	  			player.hand = updatedHand;	
+	  			// console.log(player.num, player.hand);
 	  			}
+	  			player.hand = updatedHand;	
+	  			console.log(updatedHand.length);
 	  			updateHand(player, game);
+	  			console.log(player.hand.length);
 	  			game.played = true;
 	  			player.lastPlayed = cards;
 					// console.log(player.get('hand').length);
@@ -440,8 +444,13 @@ setInterval(function() {
 		io.to(playerId).emit(data[0], data[1]);
 	}
 	individualMessages = new Map();
+
+	for(var [gameId, game] of waitingGames) {
+
+	}
+
 	for(var [gameId, game] of liveGames) {
-		console.log(game.state);
+		console.log(game.state, game.roundNumCards);
 		if(game.state == 'dealing') {
 			game.state = 'declaring'; //to remove when not developing and testing
 			for(var [playerId, player] of game.players) {
@@ -466,7 +475,7 @@ setInterval(function() {
 				}
 				for(var [playerId, player] of game.players) {
 						console.log('finalizing hand');
-						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum]);
+						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum, game.numPlayers]);
 						updateHand(player, game);
 				}
 				game.state = 'playing'; 
@@ -507,7 +516,9 @@ setInterval(function() {
 					}
 				}
 				else if (game.roundNumCards == 2) {
-					for(var [playerId, player] of game.players) {
+					console.log('a pair was played!');
+					for(i = 0; i < game.numPlayers; i++) {
+
 						var playerId = game.playerNumberToId.get(game.order[game.roundStartingPlayerNum + i]);
 						var player = game.players.get(playerId);
 						card1 = game.stringToCard.get(player.lastPlayed[0]);
@@ -520,10 +531,11 @@ setInterval(function() {
 							if(card1.power == card2.power && card1.playingSuit == card2.playingSuit) {
 								pair = true;
 							}
-							if(pair && (((card1.power > big[1].power) && (card1.playinSuit == 'T' || card1.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card1.playingSuit == 'T'))) {
+							if(pair && (((card1.power > big[1].power) && (card1.playingSuit == 'T' || card1.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card1.playingSuit == 'T'))) {
 								big = [player, card1];
 							}
 						}
+						console.log(player.num, card1, card2, card1.power == card2.power, card1.playingSuit == card2.playingSuit, big[1].power, big[1].playingSuit)
 						points += card1.points;
 						points += card2.points;
 					}
@@ -532,15 +544,20 @@ setInterval(function() {
 				game.roundStartingPlayerNum = big[0].num;
 				game.roundPlayersPlayed = 0;
 				game.currentPlayer = game.playerNumberToId.get(game.roundStartingPlayerNum);
-				io.to(game.id).emit('round winner', [big[0], game]);
+				var pointsMap = new Map();
+				for(var [playerId, player] of game.players) {
+					pointsMap.set(player.num.toString(), player.points);
+				}
+				console.log(pointsMap);
+				io.to(game.id).emit('round summary', pointsMap);
 			}
 			else {
 				console.log('in the timing piece');
 
 				if(game.timeElapsed == 0) {
-					console.log('emitting turn');
+					// console.log('emitting turn');
 					io.to(game.id).emit('turn', game.order[game.roundStartingPlayerNum + game.roundPlayersPlayed]);
-					console.log('turn emitted');
+					// console.log('turn emitted');
 				}
 				else if(game.timeElapsed > 30) {
 					console.log('over time!');
