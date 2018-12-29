@@ -485,7 +485,7 @@ setInterval(function() {
 		if(game.state == 'dealing') {
 			// game.state = 'declaring'; //to remove when not developing and testing
 			if(game.announceDeclare) {
-				io.to(game.id).emit('trump declared dealing', [game.trumpSuit, game.playerIdToNumber(game.declaringPlayer), game.numDeclaredCards]);
+				io.to(game.id).emit('trump declared dealing', [game.trumpSuit, game.playerIdToNumber.get(game.declaringPlayer), game.numDeclaredCards]);
 				game.announceDeclare = false;
 			}
 
