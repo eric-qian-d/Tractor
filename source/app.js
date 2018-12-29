@@ -496,11 +496,13 @@ setInterval(function() {
 			game.currentCardToDeal++;
 			if(game.currentCardToDeal == 26) {
 				game.state = 'declaring';
+				game.timeElapsed = 0;
 			}
 		}
 		else if(game.state == 'declaring') {
 			//logic
-			game.timeElapsed = 10;
+			game.timeElapsed++;
+			// game.timeElapsed = 10; //change when not testing
 			if(game.timeElapsed == 10) {
 				if(!game.trumpSuit) {
 					game.trumpSuit = 2;

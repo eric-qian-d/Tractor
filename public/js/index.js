@@ -108,6 +108,7 @@ function renderSuit(cards, div) {
 
 function renderDeclareButton(suit) {
   var declareDiv = document.getElementById('declare');
+  console.log(declareDiv);
   var suitButton = document.createElement('BUTTON');
   suitButton.setAttribute('id', suit.toString() + '-' + numToSuit.get(suit));
   suitButton.innerHTML = numToSuit.get(suit);
@@ -115,6 +116,7 @@ function renderDeclareButton(suit) {
     suit = parseInt(this.id[0]);
     socket.emit('declare', suit);
   })
+  console.log(suitButton);
   declareDiv.append(suitButton);
 }
 
@@ -205,7 +207,7 @@ socket.on('trump declared dealing', function(data) {
 })
 
 socket.on('deal card', function(data) {
-  console.log('hand ', data[0]);
+  // console.log('hand ', data[0]);
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
