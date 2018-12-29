@@ -196,19 +196,36 @@ io.on('connection', function(socket) {
 						// console.log('suitcards', suitCards);
 						for(var i = 0; i < suitCards.length; i++) {
 							// console.log(suitCards[i], powerMap, powerMap.has(suitCards[i]));
-							if(!(powerMap.has(suitCards[i].power))) {
-								powerMap.set(suitCards[i].power, 1)
-							}
-							else {
-								if(powerMap.get(suitCards[i].power) == 1) {
-									hasPair = true;
-									powerMap.set(suitCards[i].power, 2);
+							if(suitCards[i].power == 15) {
+								var trumpNumKey = suitCards[i].power.toString + '-' + suitCards[i].suit.toString;
+								if(!(powerMap.has(trumpNumKey))) {
+									powerMap.set(suitCards[i].power, 1)
 								}
 								else {
-									hasTriple = true;
-									powerMap.set(suitCards[i].power, 3);
+									if(powerMap.get(trumpNumKey) == 1) {
+										hasPair = true;
+										powerMap.set(trumpNumKey, 2);
+									}
+									else {
+										hasTriple = true;
+										powerMap.set(trumpNumKey, 3);
+							}
+							else {
+								if(!(powerMap.has(suitCards[i].power))) {
+									powerMap.set(suitCards[i].power, 1)
+								}
+								else {
+									if(powerMap.get(suitCards[i].power) == 1) {
+										hasPair = true;
+										powerMap.set(suitCards[i].power, 2);
+									}
+									else {
+										hasTriple = true;
+										powerMap.set(suitCards[i].power, 3);
+									}
 								}
 							}
+							
 						}
 
 
@@ -529,8 +546,10 @@ setInterval(function() {
 						else {
 							var pair = false;
 							if(card1.power == card2.power && card1.playingSuit == card2.playingSuit) {
+
 								pair = true;
 							}
+
 							if(pair && (((card1.power > big[1].power) && (card1.playingSuit == 'T' || card1.playingSuit == big[1].playingSuit)) || (big[1].playingSuit != 'T' && card1.playingSuit == 'T'))) {
 								big = [player, card1];
 							}

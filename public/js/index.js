@@ -240,6 +240,7 @@ socket.on('finalize hand', function(data) {
 });
 
 socket.on('round summary', function(data) {
+  console.log(data);
   for(var [playerNum, points] of data) {
     var playerPointsDiv = document.getElementById(playerNum);
     playerPoints.innerHTML = 'Player ' + playerNum + ':' + points.toString();
