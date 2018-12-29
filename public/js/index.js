@@ -108,7 +108,8 @@ function renderSuit(cards, div) {
 
 function renderDeclareButton(suit) {
   var declareDiv = document.getElementById('declareInfo');
-  console.log(declareDiv);
+  var testDiv = document.getElementById('spadesDiv');
+  console.log(declareDiv, testDiv);
   var suitButton = document.createElement('BUTTON');
   suitButton.setAttribute('id', suit.toString() + '-' + numToSuit.get(suit));
   suitButton.innerHTML = numToSuit.get(suit);
