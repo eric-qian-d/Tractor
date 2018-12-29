@@ -241,9 +241,9 @@ socket.on('finalize hand', function(data) {
 
 socket.on('round summary', function(data) {
   console.log(data);
-  for(var [playerNum, points] of data) {
-    var playerPointsDiv = document.getElementById(playerNum);
-    playerPoints.innerHTML = 'Player ' + playerNum + ':' + points.toString();
+  for(i = 1; i < data.length; i++) {
+    var playerPointsDiv = document.getElementById(i.toString());
+    playerPoints.innerHTML = 'Player ' + i.toString() + ':' + data[i];
   }
 })
 

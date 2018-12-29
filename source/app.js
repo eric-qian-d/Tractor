@@ -565,12 +565,12 @@ setInterval(function() {
 				game.roundStartingPlayerNum = big[0].num;
 				game.roundPlayersPlayed = 0;
 				game.currentPlayer = game.playerNumberToId.get(game.roundStartingPlayerNum);
-				var pointsMap = new Map();
+				var pointsArr = [];
 				for(var [playerId, player] of game.players) {
-					pointsMap.set(player.num.toString(), player.points);
+					pointsArr[player.num] = player.points.toString();
 				}
-				console.log(pointsMap);
-				io.to(game.id).emit('round summary', pointsMap);
+				console.log(pointsArr);
+				io.to(game.id).emit('round summary', pointsArr);
 			}
 			else {
 				console.log('in the timing piece');
