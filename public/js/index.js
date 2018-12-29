@@ -8,7 +8,11 @@ var trump = [];
 
 var selected = new Map;
 
+var possibleDeclareSuits = new Map;
+
 var stringToCard = new Map;
+
+var numToSuit = new Map([[1, 'spades'], [2, 'hearts'], [3, 'hearts'], [4, 'diamonds']]);
 // socket.on('message', function(data) {
 //   console.log(data);
 // });
@@ -102,6 +106,18 @@ function renderSuit(cards, div) {
 	}
 }
 
+function renderDeclareButton(suit) {
+  var declareDiv = document.getElementById('declare');
+  var suitButton = document.createElement('BUTTON');
+  suitButton.setAttribute('id', suit.toString() + '-' + numToSuit.get(suit));
+  suitButton.innerHTML = numToSuit.get(suit);
+  suitButton.addEventListener('click', function() {
+    suit = parseInt(this.id[0]);
+    socket.emit('declare', suit);
+  })
+  declareDiv.append(suitButton);
+}
+
 document.getElementById('createButton').addEventListener('click', function(){
   var IdDiv = document.getElementById('inputBox');
   var gameId = IdDiv.value;
@@ -173,12 +189,42 @@ socket.on('game initializing', function(data){
 
 });
 
+socket.on('trump declared dealing', function(data) {
+  var trumpDiv = getElementById('trump');
+  trumpDiv.innerHTML = numToSuit.get(data[0]) + ' declared by Player ' + data[1].toString();
+  declareDiv = document.getElementById('declare');
+  while (declareDiv.firstChild) {
+    declareDiv.removeChild(declareDiv.firstChild);
+  }
+  for(var [suit, num] of possibleDeclareSuits) {
+    if(num > data[2]) {
+      renderDeclareButton(suit);
+    }
+  }
+
+})
+
 socket.on('deal card', function(data) {
   console.log('hand ', data[0]);
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
   if(value == data[1] || suit == 'T') {
+    if(value == data[1]) {
+      if(!possibleDeclareSuits.get(suit)) {
+        possibleDeclareSuits.set(suit, 1);
+        if(1 > data[2]) {
+          renderDeclareButton(suit);
+        }
+      else {
+        possibleDeclareSuits.set(suit, possibleDeclareSuits.get(suit) + 1);
+        if(possibleDeclareSuits.get(suit) > data[2] &&  possibleDeclareSuits.get(suit) - 1 <= data[2]) {
+          renderDeclareButton(suit);
+        }
+      }
+      }
+      
+    }
     trump.push(card);
     trump.sort(function(a, b){return a.power - b.power});
     var trumpDiv = document.getElementById('trumpDiv');
@@ -223,7 +269,8 @@ socket.on('time', function(time) {
 
 socket.on('turn', function(turn) {
   var turnDiv = document.getElementById('turn');
-
+  var timeDiv = document.getElementById('time');
+  timeDiv.innerHTML = 'Time: 0' ;
   turnDiv.innerHTML = 'it is player ' + turn.toString() +  ' turn';
 });
 

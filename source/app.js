@@ -98,7 +98,10 @@ io.on('connection', function(socket) {
 	    			roundPlayersPlayed : 0,
 	    			roundNumCards : null,
 	    			roundSuit : null,
-	    			roundPointsPlayed : 0
+	    			roundPointsPlayed : 0,
+	    			declaringPlayer : null,
+	    			numDeclaredCards : 0,
+	    			announceDeclare : false
 	    		};
 	    		// console.log('after first init', newLiveGame);
 	    		for(var i = 0; i < newLiveGame.numPlayers; i++) {
@@ -123,6 +126,13 @@ io.on('connection', function(socket) {
     	individualMessages.set(socket.id, ['invalid id', gameId]);
     }
   });
+  socket.on('declare', function(data) {
+  	//insert logic for checking that declare is valid
+  	game.declaringPlayer = socket.id;
+  	game.trumpSuit = data;
+  	game.announceDeclare = true;
+  });
+
   socket.on('play', function(cards) {
   	console.log('in play fucntion');
   	var gameId = players.get(socket.id);
@@ -471,11 +481,17 @@ setInterval(function() {
 	for(var [gameId, game] of liveGames) {
 		console.log(game.state, game.roundNumCards);
 		if(game.state == 'dealing') {
-			game.state = 'declaring'; //to remove when not developing and testing
+			// game.state = 'declaring'; //to remove when not developing and testing
+			if(game.announceDeclare) {
+				io.to(game.id).emit('trump declared dealing', [game.trumpSuit, game.playerIdToNumber(game.declaringPlayer), game.numDeclaredCards]);
+				game.announceDeclare = false;
+			}
+
+
 			for(var [playerId, player] of game.players) {
 				// console.log(player.hand[0], game.currentCardToDeal);
 				console.log('dealing card');
-				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.trumpSuit, game.players.get(playerId).level]);
+				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.players.get(playerId).level, game.numDeclaredCards]);
 			}
 			game.currentCardToDeal++;
 			if(game.currentCardToDeal == 26) {
@@ -598,7 +614,7 @@ setInterval(function() {
   // io.sockets.emit('message', 'test!');
 }, 1000);
 
-setInterval(function() {
-	console.log('test');
+// setInterval(function() {
+// 	console.log('test');
 
-}, 1000);
+// }, 1000);
