@@ -243,7 +243,7 @@ socket.on('round summary', function(data) {
   console.log(data);
   for(i = 1; i < data.length; i++) {
     var playerPointsDiv = document.getElementById(i.toString());
-    playerPoints.innerHTML = 'Player ' + i.toString() + ':' + data[i];
+    playerPointsDiv.innerHTML = 'Player ' + i.toString() + ':' + data[i];
   }
 })
 
