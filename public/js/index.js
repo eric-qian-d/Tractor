@@ -231,6 +231,7 @@ socket.on('deal card', function(data) {
     }
     trump.push(card);
     trump.sort(function(a, b){return a.power - b.power});
+    console.log('trump looks like', trump);
     var trumpDiv = document.getElementById('trumpDiv');
     renderSuit(trump, trumpDiv)
   }
