@@ -209,6 +209,8 @@ io.on('connection', function(socket) {
 									else {
 										hasTriple = true;
 										powerMap.set(trumpNumKey, 3);
+									}
+								}
 							}
 							else {
 								if(!(powerMap.has(suitCards[i].power))) {
