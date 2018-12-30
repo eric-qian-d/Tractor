@@ -12,6 +12,7 @@ var stringToCard = new Map;
 var numToSuit = new Map([[1, 'spades'], [2, 'hearts'], [3, 'clubs'], [4, 'diamonds']]);
 
 function renderHandDealing(data) { //data = [cards (as objects), trump suit, trump number]
+
   console.log('rendering hand');
   hand1 = []; //spades
   hand2 = []; //hearts
@@ -19,7 +20,6 @@ function renderHandDealing(data) { //data = [cards (as objects), trump suit, tru
   hand4 = []; //diamonds
   trump = [];
   cards = data[0];
-  console.log(hand1, hand2, hand3, hand4, trump);
   console.log(data[0], data[1], data[2]);
   for(var i = 0; i < cards.length; i++) {
     var card = cards[i];
@@ -104,7 +104,6 @@ function renderSuit(cards, div) {
 function renderDeclareButton(suit) {
   var declareDiv = document.getElementById('declareInfo');
   var testDiv = document.getElementById('spadesDiv');
-  console.log(declareDiv, testDiv);
   var suitButton = document.createElement('BUTTON');
   suitButton.setAttribute('id', suit.toString() + '-' + numToSuit.get(suit));
   suitButton.innerHTML = numToSuit.get(suit);
@@ -113,7 +112,6 @@ function renderDeclareButton(suit) {
     console.log('declaring, suits look like', possibleDeclareSuits);
     socket.emit('declare', [suit, possibleDeclareSuits.get(suit)]);
   })
-  console.log(suitButton);
   declareDiv.append(suitButton);
 }
 
@@ -187,7 +185,7 @@ socket.on('game initializing', function(data){
 
 });
 
-socket.on('trump declared dealing', function(data) {
+socket.on('trump declared dealing', function(data) {// data = [trump suit, declaring player, number of cards that were declared]
   console.log('trump num', data[2]);
   var trumpDiv = document.getElementById('trump');
   trumpDiv.innerHTML = numToSuit.get(data[0]) + ' declared by Player ' + data[1].toString();
@@ -203,9 +201,9 @@ socket.on('trump declared dealing', function(data) {
 
 })
 
-socket.on('deal card', function(data) {
-  console.log('hand ', data[0], data[1]);
+socket.on('deal card', function(data) {//data: [new card (object), player level, number of cards that were declared]
   console.log('trump num delcared', data[2]);
+  console.log('dict', possibleDeclareSuits);
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
@@ -293,7 +291,6 @@ socket.on('bottom', function(bottom) {
   console.log('getting bottom');
   console.log(bottom);
   var bottomDiv = document.getElementById('bottomDiv');
-  renderSuit(bottom, bottomDiv);
   var gameInfoDiv = document.getElementById('gameInfo');
   var returnButton = document.createElement('BUTTON');
   returnButton.setAttribute('id', 'returnButton');
@@ -308,6 +305,7 @@ socket.on('bottom', function(bottom) {
   }
   })
   gameInfoDiv.append(returnButton);
+  renderHandDealing(data);
 })
 
 socket.on('round summary', function(data) {
