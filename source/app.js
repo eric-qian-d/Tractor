@@ -569,10 +569,11 @@ setInterval(function() {
 		else if(game.state == 'bottom') {
 			game.timeElapsed++;
 			if(game.timeElapsed == 1) {
+				var allCards = game.bottom.concat(game.players.get(game.declaringPlayer).hand);
 				io.to(game.declaringPlayer).emit('bottom', [game.bottom, game.trumpSuit, game.trumpNum]);
 			}
 			if(game.pickedBottom) {
-				io.to(game.declaringPlayer).emit()
+				game.state = 'playing';
 			}
 			
 
