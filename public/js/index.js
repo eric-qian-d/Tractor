@@ -210,7 +210,7 @@ socket.on('deal card', function(data) {//data: [new card (object), player level,
   // console.log('comparisoins', value, data[1], value == data[1]);
   if(value == data[1] || suit == 'T') {
     if(value == data[1]) {
-      if(!possibleDeclareSuits.get(suit)) {
+      if(!possibleDeclareSuits.has(suit)) {
         possibleDeclareSuits.set(suit, 1);
         if(1 > data[2]) {
           renderDeclareButton(suit);
@@ -287,7 +287,7 @@ socket.on('finalize hand', function(data) {
   renderHandDealing(data);
 });
 
-socket.on('bottom', function(bottom) {
+socket.on('bottom', function(data) {
   console.log('getting bottom');
   console.log(bottom);
   var bottomDiv = document.getElementById('bottomDiv');
