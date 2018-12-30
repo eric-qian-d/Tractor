@@ -573,7 +573,7 @@ setInterval(function() {
 				}
 				for(var [playerId, player] of game.players) {
 						console.log('finalizing hand');
-						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum, game.numPlayers]);
+						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum, game.numPlayers, true]);
 						updateHand(player, game);
 				}
 				game.state = 'bottom'; 
@@ -592,7 +592,7 @@ setInterval(function() {
 			}
 			if(game.pickedBottom) {
 				game.state = 'playing';
-				io.to(game.declaringPlayer).emit('finalize hand', [game.players.get(game.declaringPlayer).hand, game.trumpSuit, game.trumpNum, game.numPlayers]);
+				io.to(game.declaringPlayer).emit('finalize hand', [game.players.get(game.declaringPlayer).hand, game.trumpSuit, game.trumpNum, game.numPlayers, false]);
 				io.to(game.id).emit('play beginning', 'test');
 				game.timeElapsed = 0;
 			}

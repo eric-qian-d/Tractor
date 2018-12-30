@@ -275,16 +275,23 @@ socket.on('turn', function(turn) {
 });
 
 socket.on('finalize hand', function(data) {
-	var pointsDiv = document.getElementById('points');
+	selected = new Map;
+  if(data[4]) {
+    makePoints(data);
+  }
+
+  renderHandDealing(data);
+});
+
+function makePoints() {
+  var pointsDiv = document.getElementById('points');
   for(i = 1; i < data[3] + 1; i++) {
     var newPlayerPoints = document.createElement('div');
     newPlayerPoints.setAttribute('id', i.toString());
     newPlayerPoints.innerHTML = 'Player ' + i.toString() + ': 0';
     pointsDiv.append(newPlayerPoints);
   }
-
-  renderHandDealing(data);
-});
+}
 
 socket.on('choosing bottom', function(data) {
   var declareDiv = document.getElementById('declareInfo');
@@ -316,6 +323,7 @@ socket.on('bottom', function(data) {
 socket.on('play beginning', function() {
   var returnButton = document.getElementById('returnButton');
   returnButton.style.display = 'none';
+  selected = new Map;
 })
 
 socket.on('round summary', function(data) {
