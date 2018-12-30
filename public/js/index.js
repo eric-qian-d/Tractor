@@ -194,7 +194,7 @@ socket.on('game initializing', function(data){
 socket.on('trump declared dealing', function(data) {
   var trumpDiv = document.getElementById('trump');
   trumpDiv.innerHTML = numToSuit.get(data[0]) + ' declared by Player ' + data[1].toString();
-  declareDiv = document.getElementById('declare');
+  declareDiv = document.getElementById('declareInfo');
   while (declareDiv.firstChild) {
     declareDiv.removeChild(declareDiv.firstChild);
   }
@@ -292,6 +292,7 @@ socket.on('finalize hand', function(data) {
 });
 
 socket.on('bottom', function(bottom) {
+  console.log('getting bottom');
   var bottomDiv = document.getElementById('bottomDiv');
   renderSuit(bottomDiv, bottom);
   var gameInfoDiv = document.getElementById('gameInfo');
