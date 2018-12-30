@@ -102,7 +102,8 @@ io.on('connection', function(socket) {
 	    			declaringPlayer : null,
 	    			numDeclaredCards : 0,
 	    			announceDeclare : false,
-	    			pickedBottom : false
+	    			pickedBottom : false,
+	    			bottomPoints = 0
 	    		};
 	    		// console.log('after first init', newLiveGame);
 	    		for(var i = 0; i < newLiveGame.numPlayers; i++) {
@@ -140,37 +141,46 @@ io.on('connection', function(socket) {
   	}
   	
   });
-  socket.on('return bottom', function(cards) {
+  socket.on('return bottom', function(cards) { //cards = array of returned cards (str)
+  	console.log('cards', cards);
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
   	if (cards.length == game.bottom.length) {
   		var player = game.players.get(socket.id);
-  		if(player.id = game.declaringPlayer) {
+  		if(player.id == game.declaringPlayer) {
   			//check if these cards are indeed legal
-  			var cardsArr = []
+  			var cardsArr = [];
 	  		for(var i = 0; i < cards.length; i++) {
 	  			card = game.stringToCard.get(cards[i]);
-	  			cardsArr.push(card)
+	  			cardsArr.push(card);
 	  		}
-  			updatedHand = []
+  			var updatedHand = [];
+  			var updatedBottom = [];
   			var hand = player.hand;
   			var bottom = game.bottom;
   			var candidates = hand.concat(bottom);
   			for(var i = 0; i < candidates.length; i++) {
-  				toAdd = true;
+  				var toAdd = true;
   				for(var j = 0; j < cardsArr.length; j ++) {
   					// console.log(hand[i], cardsArr[j], hand[i] == cardsArr[j], hand[i] === cardsArr[j]);
   					if (candidates[i] == cardsArr[j]) {
   						toAdd = false;
+  						break;
   					}
   				}
   				if(toAdd) {
   					// console.log(toAdd, hand[i]);
-  					updatedHand.push(hand[i]);
+  					updatedHand.push(candidates[i]);
+  				}
+  				else {
+  					game.bottomPoints += candidates[i];
+  					updatedBottom.push(candidates[i]);
   				}
   			// console.log(player.num, player.hand);
   			}
-  			player.hand = updatedHand;	
+  			player.hand = updatedHand;
+  			game.bottom = updatedBottom;
+  			io.to(socket.id).emit('test', [player.hand, player.hand.length])
   			// console.log(updatedHand.length);
   			updateHand(player, game);
   			game.pickedBottom = true;

@@ -303,6 +303,7 @@ socket.on('bottom', function(data) {
     for(var [k, v] of selected) {
       console.log(k, v)
       toDiscard.push(k);
+    console.log('what is being returned', toDiscard);
     socket.emit('return bottom', toDiscard);
     // this.style.display = 'none';
   }
@@ -324,3 +325,7 @@ socket.on('round summary', function(data) {
   }
 })
 
+
+socket.on('test', function(data) {
+  console.log(data);
+})
