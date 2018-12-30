@@ -85,7 +85,7 @@ function renderSuit(cards, div) {
 				selected.delete(this.id);
 				this.style.border = '0px';
         console.log(selected)
-				console.log('changing to unbordered');
+				// console.log('changing to unbordered');
 			}
 			else {
 				selected.set(this.id, true) ;
@@ -93,7 +93,7 @@ function renderSuit(cards, div) {
 				this.style.border = '1px';
 				this.style.borderColor = 'black';
 				this.style.borderStyle = 'solid';
-				console.log('changing to bordered');
+				// console.log('changing to bordered');
 			}
 		});
 		stringToCard.set(cards[i].value.toString() + '-' + cards[i].suit.toString() + '-' + cards[i].deck.toString(), cards[i]);
@@ -109,7 +109,7 @@ function renderDeclareButton(suit) {
   suitButton.innerHTML = numToSuit.get(suit);
   suitButton.addEventListener('click', function() {
     suit = parseInt(this.id[0]);
-    console.log('declaring, suits look like', possibleDeclareSuits);
+    // console.log('declaring, suits look like', possibleDeclareSuits);
     socket.emit('declare', [suit, possibleDeclareSuits.get(suit)]);
   })
   declareDiv.append(suitButton);
@@ -176,7 +176,7 @@ socket.on('game already joined', function(data){
 });
 
 socket.on('game initializing', function(data){
-  console.log('game init!');
+  // console.log('game init!');
   hand1 = []; //spades
   hand2 = []; //hearts
   hand3 = []; //clubs
@@ -215,13 +215,13 @@ socket.on('deal card', function(data) {//data: [new card (object), player level,
         if(1 > data[2]) {
           renderDeclareButton(suit);
         }
+      }
       else {
         possibleDeclareSuits.set(suit, possibleDeclareSuits.get(suit) + 1);
         // console.log('just updated', possibleDeclareSuits);
         if(possibleDeclareSuits.get(suit) > data[2] &&  possibleDeclareSuits.get(suit) - 1 <= data[2]) {
           renderDeclareButton(suit);
         }
-      }
       }
       
     }
@@ -289,7 +289,7 @@ socket.on('finalize hand', function(data) {
 
 socket.on('bottom', function(data) {
   console.log('getting bottom');
-  console.log(bottom);
+  // console.log(bottom);
   var bottomDiv = document.getElementById('bottomDiv');
   var gameInfoDiv = document.getElementById('gameInfo');
   var returnButton = document.createElement('BUTTON');
