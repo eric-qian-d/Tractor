@@ -115,6 +115,7 @@ function renderDeclareButton(suit) {
   suitButton.innerHTML = numToSuit.get(suit);
   suitButton.addEventListener('click', function() {
     suit = parseInt(this.id[0]);
+    console.log('declaring, suits look like', possibleDeclareSuits);
     socket.emit('declare', [suit, possibleDeclareSuits.get(suit)]);
   })
   console.log(suitButton);
@@ -192,6 +193,7 @@ socket.on('game initializing', function(data){
 });
 
 socket.on('trump declared dealing', function(data) {
+  console.log('trump num', data[2]);
   var trumpDiv = document.getElementById('trump');
   trumpDiv.innerHTML = numToSuit.get(data[0]) + ' declared by Player ' + data[1].toString();
   declareDiv = document.getElementById('declareInfo');
@@ -208,7 +210,7 @@ socket.on('trump declared dealing', function(data) {
 
 socket.on('deal card', function(data) {
   console.log('hand ', data[0], data[1]);
-
+  console.log('trump num delcared', data[2]);
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
@@ -222,6 +224,7 @@ socket.on('deal card', function(data) {
         }
       else {
         possibleDeclareSuits.set(suit, possibleDeclareSuits.get(suit) + 1);
+        console.log('just updated', possibleDeclareSuits);
         if(possibleDeclareSuits.get(suit) > data[2] &&  possibleDeclareSuits.get(suit) - 1 <= data[2]) {
           renderDeclareButton(suit);
         }
@@ -295,7 +298,7 @@ socket.on('bottom', function(bottom) {
   console.log('getting bottom');
   console.log(bottom);
   var bottomDiv = document.getElementById('bottomDiv');
-  renderSuit(bottomDiv, bottom);
+  renderSuit(bottom, bottomDiv);
   var gameInfoDiv = document.getElementById('gameInfo');
   var returnButton = document.createElement('BUTTON');
   returnButton.setAttribute('id', 'returnButton');
@@ -308,7 +311,7 @@ socket.on('bottom', function(bottom) {
     this.style.display = 'none';
   }
   })
-
+  gameInfoDiv.append(returnButton);
 })
 
 socket.on('round summary', function(data) {
