@@ -131,11 +131,14 @@ io.on('connection', function(socket) {
   	//insert logic for checking that declare is valid
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
-  	game.declaringPlayer = socket.id;
-  	game.trumpSuit = data[0];
-  	game.trumpNum = game.players.get(socket.id).level;
-  	game.numDeclaredCards = data[1];
-  	game.announceDeclare = true;
+  	if(game.state == 'dealing' || game.state == 'declaring') {
+  		game.declaringPlayer = socket.id;
+	  	game.trumpSuit = data[0];
+	  	game.trumpNum = game.players.get(socket.id).level;
+	  	game.numDeclaredCards = data[1];
+	  	game.announceDeclare = true;
+  	}
+  	
   });
   socket.on('return bottom', function(cards) {
   	var gameId = players.get(socket.id);
@@ -570,10 +573,12 @@ setInterval(function() {
 			game.timeElapsed++;
 			if(game.timeElapsed == 1) {
 				var allCards = game.bottom.concat(game.players.get(game.declaringPlayer).hand);
-				io.to(game.declaringPlayer).emit('bottom', [game.bottom, game.trumpSuit, game.trumpNum]);
+				io.to(game.declaringPlayer).emit('bottom', [allCards, game.trumpSuit, game.trumpNum]);
+				io.to(game.id).emit('choosing bottom', game.id);
 			}
 			if(game.pickedBottom) {
 				game.state = 'playing';
+				io.to(game.id).emit('play beginning');
 			}
 			
 

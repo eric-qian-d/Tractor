@@ -103,7 +103,6 @@ function renderSuit(cards, div) {
 
 function renderDeclareButton(suit) {
   var declareDiv = document.getElementById('declareInfo');
-  var testDiv = document.getElementById('spadesDiv');
   var suitButton = document.createElement('BUTTON');
   suitButton.setAttribute('id', suit.toString() + '-' + numToSuit.get(suit));
   suitButton.innerHTML = numToSuit.get(suit);
@@ -263,7 +262,6 @@ socket.on('cards dealt', function(data) {
 });
 
 socket.on('time', function(time) {
-  // console.log('time', time);
   var timeDiv = document.getElementById('time');
   timeDiv.innerHTML = 'Time: ' + time.toString();
 });
@@ -287,6 +285,11 @@ socket.on('finalize hand', function(data) {
   renderHandDealing(data);
 });
 
+socket.on('choosing bottom', function(data) {
+  var declareDiv = document.getElementById('declareInfo');
+  declareDiv.style.display = 'none';
+})
+
 socket.on('bottom', function(data) {
   console.log('getting bottom');
   // console.log(bottom);
@@ -301,11 +304,16 @@ socket.on('bottom', function(data) {
       console.log(k, v)
       toDiscard.push(k);
     socket.emit('return bottom', toDiscard);
-    this.style.display = 'none';
+    // this.style.display = 'none';
   }
   })
   gameInfoDiv.append(returnButton);
   renderHandDealing(data);
+})
+
+socket.on('play beginning', function() {
+  var returnButton = document.getElementById('returnButton');
+  returnButton.style.display = 'none';
 })
 
 socket.on('round summary', function(data) {
