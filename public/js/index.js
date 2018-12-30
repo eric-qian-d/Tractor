@@ -283,7 +283,7 @@ socket.on('finalize hand', function(data) {
   renderHandDealing(data);
 });
 
-function makePoints() {
+function makePoints(data) {
   var pointsDiv = document.getElementById('points');
   for(i = 1; i < data[3] + 1; i++) {
     var newPlayerPoints = document.createElement('div');
