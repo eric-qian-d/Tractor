@@ -101,7 +101,8 @@ io.on('connection', function(socket) {
 	    			roundPointsPlayed : 0,
 	    			declaringPlayer : null,
 	    			numDeclaredCards : 0,
-	    			announceDeclare : false
+	    			announceDeclare : false,
+	    			pickedBottom : false
 	    		};
 	    		// console.log('after first init', newLiveGame);
 	    		for(var i = 0; i < newLiveGame.numPlayers; i++) {
@@ -134,6 +135,45 @@ io.on('connection', function(socket) {
   	game.trumpSuit = data;
   	game.announceDeclare = true;
   });
+  socket.on('return bottom', function(cards) {
+  	var gameId = players.get(socket.id);
+  	game = liveGames.get(gameId);
+  	if (cards.length == game.bottom.length) {
+  		var player = game.players.get(socket.id);
+  		if(player.id = game.declaringPlayer) {
+  			//check if these cards are indeed legal
+  			var cardsArr = []
+	  		for(var i = 0; i < cards.length; i++) {
+	  			card = game.stringToCard.get(cards[i]);
+	  			cardsArr.push(card)
+	  		}
+  			updatedHand = []
+  			var hand = player.hand;
+  			var bottom = game.bottom;
+  			var candidates = hand.concat(bottom);
+  			for(var i = 0; i < candidates.length; i++) {
+  				toAdd = true;
+  				for(var j = 0; j < cardsArr.length; j ++) {
+  					// console.log(hand[i], cardsArr[j], hand[i] == cardsArr[j], hand[i] === cardsArr[j]);
+  					if (candidates[i] == cardsArr[j]) {
+  						toAdd = false;
+  					}
+  				}
+  				if(toAdd) {
+  					// console.log(toAdd, hand[i]);
+  					updatedHand.push(hand[i]);
+  				}
+  			// console.log(player.num, player.hand);
+  			}
+  			player.hand = updatedHand;	
+  			// console.log(updatedHand.length);
+  			updateHand(player, game);
+  			game.pickedBottom = true;
+  		}
+  	}
+
+
+  })
 
   socket.on('play', function(cards) {
   	console.log('in play fucntion');
@@ -297,9 +337,9 @@ io.on('connection', function(socket) {
 	  			// console.log(player.num, player.hand);
 	  			}
 	  			player.hand = updatedHand;	
-	  			console.log(updatedHand.length);
+	  			// console.log(updatedHand.length);
 	  			updateHand(player, game);
-	  			console.log(player.hand.length);
+	  			// console.log(player.hand.length);
 	  			game.played = true;
 	  			player.lastPlayed = cards;
 					// console.log(player.get('hand').length);
@@ -496,7 +536,7 @@ setInterval(function() {
 				io.to(playerId).emit('deal card', [player.hand[game.currentCardToDeal], game.players.get(playerId).level, game.numDeclaredCards]);
 			}
 			game.currentCardToDeal++;
-			if(game.currentCardToDeal == 26) {
+			if(game.currentCardToDeal == 25) {
 				game.state = 'declaring';
 				game.timeElapsed = 0;
 			}
@@ -505,7 +545,7 @@ setInterval(function() {
 			//logic
 			game.timeElapsed++;
 			// game.timeElapsed = 10; //change when not testing
-			if(game.timeElapsed == 10) {
+			if(game.timeElapsed == 10 || game.numDeclaredCards == game.numDecks) {
 				if(!game.trumpSuit) {
 					game.trumpSuit = 2;
 					game.trumpNum = 2;
@@ -517,11 +557,26 @@ setInterval(function() {
 						io.to(playerId).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum, game.numPlayers]);
 						updateHand(player, game);
 				}
-				game.state = 'playing'; 
+				game.state = 'bottom'; 
 				game.timeElapsed = 0;
+				game.currentPlayer = game.declaringPlayer;
+				game.roundStartingPlayerNum = game.playerIdToNumber.get(game.declaringPlayer);
 				//logic for setting declarer to round starting player (use player number!)
 			}
 		}
+		else if(game.state == 'bottom') {
+			game.timeElapsed++;
+			if(game.timeElapsed == 1) {
+				io.to(game.declaringPlayer).emit('bottom', game.bottom)
+			}
+			if(game.declared) {
+				io.to(game.declaringPlayer).emit()
+			}
+			
+
+
+		}
+
 		else if(game.state == 'playing') {
 			if(game.played) {
 				console.log('in game.played');

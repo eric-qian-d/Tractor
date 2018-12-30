@@ -142,7 +142,6 @@ document.getElementById('playButton').addEventListener('click', function() {
     console.log(k, v)
     toPlay.push(k);
   }
-  console.log(toPlay);
   socket.emit('play', toPlay);
 });
 
@@ -193,7 +192,7 @@ socket.on('game initializing', function(data){
 });
 
 socket.on('trump declared dealing', function(data) {
-  var trumpDiv = getElementById('trump');
+  var trumpDiv = document.getElementById('trump');
   trumpDiv.innerHTML = numToSuit.get(data[0]) + ' declared by Player ' + data[1].toString();
   declareDiv = document.getElementById('declare');
   while (declareDiv.firstChild) {
@@ -288,9 +287,27 @@ socket.on('finalize hand', function(data) {
     newPlayerPoints.innerHTML = 'Player ' + i.toString() + ': 0';
     pointsDiv.append(newPlayerPoints);
   }
-  
+
   renderHandDealing(data);
 });
+
+socket.on('bottom', function(bottom) {
+  var bottomDiv = document.getElementById('bottomDiv');
+  renderSuit(bottomDiv, bottom);
+  var gameInfoDiv = document.getElementById('gameInfo');
+  var returnButton = document.createElement('BUTTON');
+  returnButton.setAttribute('id', 'returnButton');
+  returnButton.addEventListener('click', function() {
+    var toDiscard = [];
+    for(var [k, v] of selected) {
+      console.log(k, v)
+      toDiscard.push(k);
+    socket.emit('return bottom', toDiscard);
+    this.style.display = 'none';
+  }
+  })
+
+})
 
 socket.on('round summary', function(data) {
   console.log(data);
