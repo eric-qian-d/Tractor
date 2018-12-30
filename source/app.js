@@ -588,7 +588,9 @@ setInterval(function() {
 			}
 			if(game.pickedBottom) {
 				game.state = 'playing';
+				io.to(game.declaringPlayer).emit('finalize hand', [player.hand, game.trumpSuit, game.trumpNum, game.numPlayers]);
 				io.to(game.id).emit('play beginning');
+				game.timeElapsed = 0;
 			}
 			
 
