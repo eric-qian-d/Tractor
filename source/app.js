@@ -145,6 +145,7 @@ io.on('connection', function(socket) {
   	console.log('cards', cards);
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
+
   	if (cards.length == game.bottom.length) {
   		var player = game.players.get(socket.id);
   		if(player.id == game.declaringPlayer) {
@@ -173,7 +174,7 @@ io.on('connection', function(socket) {
   					updatedHand.push(candidates[i]);
   				}
   				else {
-  					game.bottomPoints += candidates[i];
+  					game.bottomPoints += candidates[i].points;
   					updatedBottom.push(candidates[i]);
   				}
   			// console.log(player.num, player.hand);

@@ -84,7 +84,7 @@ function renderSuit(cards, div) {
 			if (selected.get(this.id)) {
 				selected.delete(this.id);
 				this.style.border = '0px';
-        console.log(selected)
+        console.log(selected);
 				// console.log('changing to unbordered');
 			}
 			else {
@@ -93,6 +93,7 @@ function renderSuit(cards, div) {
 				this.style.border = '1px';
 				this.style.borderColor = 'black';
 				this.style.borderStyle = 'solid';
+        console.log(selected);
 				// console.log('changing to bordered');
 			}
 		});
