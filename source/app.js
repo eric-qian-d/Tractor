@@ -103,7 +103,7 @@ io.on('connection', function(socket) {
 	    			numDeclaredCards : 0,
 	    			announceDeclare : false,
 	    			pickedBottom : false,
-	    			bottomPoints = 0
+	    			bottomPoints : 0
 	    		};
 	    		// console.log('after first init', newLiveGame);
 	    		for(var i = 0; i < newLiveGame.numPlayers; i++) {
