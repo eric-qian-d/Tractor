@@ -569,9 +569,9 @@ setInterval(function() {
 		else if(game.state == 'bottom') {
 			game.timeElapsed++;
 			if(game.timeElapsed == 1) {
-				io.to(game.declaringPlayer).emit('bottom', game.bottom)
+				io.to(game.declaringPlayer).emit('bottom', [game.bottom, game.trumpSuit, game.trumpNum]);
 			}
-			if(game.declared) {
+			if(game.pickedBottom) {
 				io.to(game.declaringPlayer).emit()
 			}
 			

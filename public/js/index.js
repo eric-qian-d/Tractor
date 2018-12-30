@@ -7,16 +7,11 @@ var hand4 = []; //diamonds
 var trump = [];
 
 var selected = new Map;
-
 var possibleDeclareSuits = new Map;
-
 var stringToCard = new Map;
+var numToSuit = new Map([[1, 'spades'], [2, 'hearts'], [3, 'clubs'], [4, 'diamonds']]);
 
-var numToSuit = new Map([[1, 'spades'], [2, 'hearts'], [3, 'hearts'], [4, 'diamonds']]);
-// socket.on('message', function(data) {
-//   console.log(data);
-// });
-function renderHandDealing(data) {
+function renderHandDealing(data) { //data = [cards (as objects), trump suit, trump number]
   console.log('rendering hand');
   hand1 = []; //spades
   hand2 = []; //hearts
@@ -214,7 +209,7 @@ socket.on('deal card', function(data) {
   var card = data[0];
   var suit = card.suit;
   var value = card.value;
-  console.log('comparisoins', value, data[1], value == data[1]);
+  // console.log('comparisoins', value, data[1], value == data[1]);
   if(value == data[1] || suit == 'T') {
     if(value == data[1]) {
       if(!possibleDeclareSuits.get(suit)) {
@@ -224,7 +219,7 @@ socket.on('deal card', function(data) {
         }
       else {
         possibleDeclareSuits.set(suit, possibleDeclareSuits.get(suit) + 1);
-        console.log('just updated', possibleDeclareSuits);
+        // console.log('just updated', possibleDeclareSuits);
         if(possibleDeclareSuits.get(suit) > data[2] &&  possibleDeclareSuits.get(suit) - 1 <= data[2]) {
           renderDeclareButton(suit);
         }
@@ -234,7 +229,7 @@ socket.on('deal card', function(data) {
     }
     trump.push(card);
     trump.sort(function(a, b){return a.power - b.power});
-    console.log('trump looks like', trump);
+    // console.log('trump looks like', trump);
     var trumpDiv = document.getElementById('trumpDiv');
     renderSuit(trump, trumpDiv)
   }
@@ -302,6 +297,7 @@ socket.on('bottom', function(bottom) {
   var gameInfoDiv = document.getElementById('gameInfo');
   var returnButton = document.createElement('BUTTON');
   returnButton.setAttribute('id', 'returnButton');
+  returnButton.innerHTML = 'Discard';
   returnButton.addEventListener('click', function() {
     var toDiscard = [];
     for(var [k, v] of selected) {
