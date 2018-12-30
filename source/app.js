@@ -160,6 +160,7 @@ io.on('connection', function(socket) {
   			var hand = player.hand;
   			var bottom = game.bottom;
   			var candidates = hand.concat(bottom);
+  			io.to(socket.id).emit('test', 'beginning hand consolidation');
   			for(var i = 0; i < candidates.length; i++) {
   				var toAdd = true;
   				for(var j = 0; j < cardsArr.length; j ++) {
