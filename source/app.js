@@ -132,7 +132,9 @@ io.on('connection', function(socket) {
   	var gameId = players.get(socket.id);
   	game = liveGames.get(gameId);
   	game.declaringPlayer = socket.id;
-  	game.trumpSuit = data;
+  	game.trumpSuit = data[0];
+  	game.trumpNum = game.players.get(socket.id).level;
+  	game.numDeclaredCards = data[1];
   	game.announceDeclare = true;
   });
   socket.on('return bottom', function(cards) {

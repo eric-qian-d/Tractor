@@ -115,7 +115,7 @@ function renderDeclareButton(suit) {
   suitButton.innerHTML = numToSuit.get(suit);
   suitButton.addEventListener('click', function() {
     suit = parseInt(this.id[0]);
-    socket.emit('declare', suit);
+    socket.emit('declare', [suit, possibleDeclareSuits.get(suit)]);
   })
   console.log(suitButton);
   declareDiv.append(suitButton);
@@ -293,6 +293,7 @@ socket.on('finalize hand', function(data) {
 
 socket.on('bottom', function(bottom) {
   console.log('getting bottom');
+  console.log(bottom);
   var bottomDiv = document.getElementById('bottomDiv');
   renderSuit(bottomDiv, bottom);
   var gameInfoDiv = document.getElementById('gameInfo');
