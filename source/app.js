@@ -493,7 +493,9 @@ function updateHand(player, game) {
 	player.split.set(2, []);
 	player.split.set(3, []);
 	player.split.set(4, []);
+
 	for(var i = 0; i < player.hand.length; i++) {
+		io.to(player.id).emit('test', [i, player.hand[i]]);
 		var card = player.hand[i];
 	  var suit = card.suit;
 	  var value = card.value;
